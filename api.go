@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-const baseUrl = "https://graph.facebook.com/v17.0/%s/messages"
+const version = "v21.0"
+const baseUrl = "https://graph.facebook.com/%s/%s/messages"
 
-func NewWhatsapp(accesToken string, numberId string, l *slog.Logger) *Whatsapp {
-	w := &Whatsapp{
+func NewWhatsapp(accessToken string, numberId string, l *slog.Logger) *Whatsapp {
+	return &Whatsapp{
 		client: &http.Client{
 			Timeout: 15 * time.Second,
 		},
-		accessToken: accesToken,
+		accessToken: accessToken,
 		numberId:    numberId,
-		url:         fmt.Sprintf(baseUrl, numberId),
+		url:         fmt.Sprintf(baseUrl, version, numberId),
         logger:      l.With("module", "whatsapp"),
 	}
-	return w
 }
 
 func newPayload(t MessageType) *Payload {
@@ -94,6 +94,7 @@ func (w *Whatsapp) Send(to string, payload *Payload) (*Response, error) {
 	w.logger.Debug("Sending message", "to", payload.To, "t", payload.Type)
 	bodyReader := bytes.NewReader(jsonBody)
 
+    fmt.Println(w.url)
 	req, err := http.NewRequest(http.MethodPost, w.url, bodyReader)
 	if err != nil {
 		return nil, err

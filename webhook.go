@@ -2,14 +2,22 @@ package whatsapp
 
 import (
 	"encoding/json"
-	"log/slog"
+	"fmt"
 	"net/http"
 )
 
+type Handler interface {
+    OnStatusChange(s *Status)
+    OnNewMessage(m *Message)
+}
+
+type HandleEventFunc[T any] func(e *T)
+
 type Webhook struct {
-     entries    chan Entry 
      token      string
-     logger     *slog.Logger
+
+     // Notifications handlers
+     OnStatusChangeCallback HandleEventFunc[Status]
 }
 
 // Whatsapp send us this
@@ -92,8 +100,40 @@ type Status struct {
     Id          string  `json:"id"`
     RecipientId string  `json:"recipient_id"` 
     Errors      []Error `json:"errors"`
-    Status      string  `json:"status"` //delivered, read, sent
+    Status      DeliveryStatus  `json:"status"`
     Timestamp   string  `json:"timestamp"`
+}
+
+type DeliveryStatus string
+const (
+	DeliveryStatusDelivered DeliveryStatus = "delivered"
+	DeliveryStatusRead      DeliveryStatus = "read"
+	DeliveryStatusSent      DeliveryStatus = "sent"
+)
+    
+var deliveryStatusValue = map[string]DeliveryStatus {
+    "delivered": DeliveryStatusDelivered,
+    "read": DeliveryStatusRead,
+    "sent": DeliveryStatusSent, 
+}
+
+func (s *DeliveryStatus) UnmarshalJSON(data []byte) (err error) {
+	var status string
+	if err := json.Unmarshal(data, &status); err != nil {
+		return err
+	}
+	if *s, err = parseDeliveryStatus(status); err != nil {
+		return err
+	}
+	return nil
+}
+
+func parseDeliveryStatus(s string) (DeliveryStatus, error) {
+    value, ok := deliveryStatusValue[s]
+	if !ok {
+		return DeliveryStatus(""), fmt.Errorf("%q is not a valid delivery status", s)
+	}
+	return DeliveryStatus(value), nil
 }
 
 type Contact struct {
@@ -103,31 +143,59 @@ type Contact struct {
     }`json:"profile"`
 }
 
-func NewWebhook(token string, l *slog.Logger) *Webhook{
+func NewWebhook(token string) *Webhook {
     return &Webhook {
-        entries: make(chan Entry),
-        logger: l.With("module", "webhook"),
         token: token,
     }
 }
 
-func (wh *Webhook) ReciveNotificaction(w http.ResponseWriter, r *http.Request) error {
+func (wh *Webhook) reciveNotificaction(w http.ResponseWriter, r *http.Request) {
     defer r.Body.Close()
-    var payload NotificationPayload
-    if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-        wh.logger.Error("error parsing payload", "err", err.Error())
-        return err
+    var notification NotificationPayload
+    if err := json.NewDecoder(r.Body).Decode(&notification); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
     }
 
-    for _, e := range payload.Entries {
-        wh.entries <- e
-    }
+    wh.handleNotification(notification)
 
     w.WriteHeader(http.StatusOK)
-    return nil
 }
 
-func (wh *Webhook) Verify(w http.ResponseWriter, r *http.Request) error {
+func (wh *Webhook) OnStatusChange(callback HandleEventFunc[Status]){
+    wh.OnStatusChangeCallback = callback
+}
+
+func (wh *Webhook) handleNotification(noti NotificationPayload) {
+    for _, entry := range noti.Entries {
+        for _, change := range entry.Changes {
+            for _, status := range change.Value.Statuses {
+                go wh.OnStatusChangeCallback(&status)
+            }
+            // TODO:
+            // for _, status := range change.Value.Messages {
+            //     go wh.OnNewMessage(status)
+            // }
+            // for _, status := range change.Value.Contacts {
+            //     go wh.OnNewMessage(status)
+            // }
+        }
+    }
+}
+
+func (wh *Webhook) ServeHTTP(w http.ResponseWriter, r *http.Request){
+    switch r.Method{
+    case http.MethodPost:
+        wh.reciveNotificaction(w, r)
+        return
+    case http.MethodGet:
+        wh.verify(w, r)
+        return
+    }
+    http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (wh *Webhook) verify(w http.ResponseWriter, r *http.Request) {
     challenge := r.URL.Query().Get("hub.challenge")
     verify_token := r.URL.Query().Get("hub.verify_token")
     mode := r.URL.Query().Get("hub.mode")
@@ -138,18 +206,5 @@ func (wh *Webhook) Verify(w http.ResponseWriter, r *http.Request) error {
     } else {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte("400 - Bad request"))
-    }
-    
-    return nil
-}
-
-func (wh *Webhook) ConsumeEntries(callback func (*Entry) error ) {
-    for {
-        select{
-        case entry := <- wh.entries:
-            if err := callback(&entry); err != nil {
-                wh.logger.Error(err.Error())
-            }
-        }
     }
 }

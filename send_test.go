@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const to = "+5493415854220"
+const to = "54341155854220"
 
 func defaultWhatsapp() *Whatsapp {
 	if err := godotenv.Load("./.env"); err != nil {
@@ -25,6 +25,8 @@ func defaultWhatsapp() *Whatsapp {
     if !ok || numberId == "" {
         panic("NUMBER_ID is required in the environment")
     }
+    fmt.Println(accessToken)
+    fmt.Println(numberId)
 
     logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
     w := NewWhatsapp(accessToken, numberId, logger)
