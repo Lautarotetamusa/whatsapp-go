@@ -41,7 +41,7 @@ type TextPayload struct {
 
 type MediaPayload struct {
     // Optional
-    Caption string     `json:"caption"`
+    Caption string     `json:"caption,omitempty"`
 
     // Only one of
     Link    string     `json:"link"`
@@ -49,33 +49,13 @@ type MediaPayload struct {
 }
 
 type DocumentPayload struct {
-	Link     string `json:"link"`
-	Caption  string `json:"caption"`
-	Filename string `json:"filename"`
-}
+    // Optional
+	Filename string     `json:"filename,omitempty"`
+	Caption  string     `json:"caption,omitempty"`
 
-type TemplatePayload struct {
-	Name       string       `json:"name"`
-    Language   Language     `json:"language"`
-	Components []Components `json:"components"`
-}
-
-type Parameter struct {
-    Type        string           `json:"type"`
-
-    Text        *TextPayload     `json:"text,omitempty"`
-	Image       *MediaPayload    `json:"image,omitempty"`
-	Video       *MediaPayload    `json:"video,omitempty"`
-	Document    *DocumentPayload `json:"document,omitempty"`
-}
-
-type Components struct {
-    Type       string       `json:"type"`
-	Parameters []Parameter  `json:"parameters"`
-}
-
-type Language struct {
-	Code string `json:"code"`
+    // Only one of
+    Link    string     `json:"link"`
+	ID      string     `json:"id"`
 }
 
 // The payload data types must implement this interface

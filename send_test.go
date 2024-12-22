@@ -57,7 +57,7 @@ func TestSendImageWithId(t *testing.T) {
     imageId := "903533311949481"
 
     payload := MediaPayload{
-        ID: &imageId,
+        ID: imageId,
         Caption: "Test image",
     }
 
@@ -75,7 +75,7 @@ func TestSendVideoWithId(t *testing.T) {
     imageId := "967038865474431"
 
     payload := MediaPayload{
-        ID: &imageId,
+        ID: imageId,
         Caption: "Test video",
     }
 
@@ -91,13 +91,45 @@ func TestMediaCantHaveIdAndLink(t *testing.T) {
     w := defaultWhatsapp()
 
     imageId := "12345"
-    link := "hola.com"
     payload := MediaPayload{
-        ID: &imageId,
-        Link: &link,
+        ID: imageId,
+        Link: "https://hola.com",
     }
 
     _, err := w.SendImage(to, payload)
+    if err == nil {
+        t.Fatalf("media with id and link must be an error")
+    }
+}
+
+func TestSendDocument(t *testing.T) {
+    w := defaultWhatsapp()
+    //TODO: this id lasts 15 days, the test will fail
+    docId := "903533311949481"
+
+    payload := DocumentPayload{
+        ID: docId,
+        Caption: "Test document",
+        Filename: "test_file.pdf",
+    }
+
+    res, err := w.SendDocument(to, payload)
+
+    fmt.Printf("%v\n", res)
+    if err != nil {
+        t.Fatalf("%s\n", err)
+    }
+}
+
+func TestDocumentCantHaveIdAndLink(t *testing.T) {
+    w := defaultWhatsapp()
+
+    payload := DocumentPayload{
+        ID: "12345",
+        Link: "http://test.com/",
+    }
+
+    _, err := w.SendDocument(to, payload)
     if err == nil {
         t.Fatalf("media with id and link must be an error")
     }

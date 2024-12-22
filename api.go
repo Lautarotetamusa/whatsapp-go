@@ -46,18 +46,6 @@ func newTextPayload(message string) *Payload {
 	return p
 }
 
-func NewTemplatePayload(name string, components []Components) *Payload {
-	p := newPayload(TextMessage)
-	p.Data = &TemplatePayload{
-		Name:       name,
-		Components: components,
-		Language: Language{
-			Code: "es_MX",
-		},
-	}
-	return p
-}
-
 func NewDocumentPayload(link string, caption string, filename string) *Payload {
 	p := newPayload(DocumentMessage)
     doc := DocumentPayload{
@@ -71,15 +59,15 @@ func NewDocumentPayload(link string, caption string, filename string) *Payload {
 
 func (m *MediaPayload) validate() error {
     if (m.Link != "") && (m.ID != "") {
-        return fmt.Errorf("media payload cant have both link and id")
+        return fmt.Errorf(ErrorIdAndLink, ImageMessage.String())
     }
     return nil
 }
 
 func (m *DocumentPayload) validate() error {
-    return nil
-}
-func (m *TemplatePayload) validate() error {
+    if (m.Link != "") && (m.ID != "") {
+        return fmt.Errorf(ErrorIdAndLink, DocumentMessage.String())
+    }
     return nil
 }
 func (m *TextPayload) validate() error {
@@ -149,5 +137,11 @@ func (w *Whatsapp) SendImage(to string, media MediaPayload) (*Response, error){
 func (w *Whatsapp) SendVideo(to string, media MediaPayload) (*Response, error) {
     p := newPayload(VideoMessage)
     p.Data = &media
+	return w.Send(to, p)
+}
+
+func (w *Whatsapp) SendDocument(to string, doc DocumentPayload) (*Response, error) {
+    p := newPayload(DocumentMessage)
+    p.Data = &doc
 	return w.Send(to, p)
 }
