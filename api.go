@@ -39,7 +39,7 @@ func newTextPayload(message string) *Payload {
 
     previewUrl := strings.Contains(message, "http://") || strings.Contains(message, "https://")
 
-	p.Text = &TextPayload{
+	p.Data = &TextPayload{
 		PreviewUrl: previewUrl,
 		Body:       message,
 	}
@@ -48,7 +48,7 @@ func newTextPayload(message string) *Payload {
 
 func NewTemplatePayload(name string, components []Components) *Payload {
 	p := newPayload(TextMessage)
-	p.Template = &TemplatePayload{
+	p.Data = &TemplatePayload{
 		Name:       name,
 		Components: components,
 		Language: Language{
@@ -58,43 +58,45 @@ func NewTemplatePayload(name string, components []Components) *Payload {
 	return p
 }
 
-func NewMediaPayload(id string, t MessageType) *Payload {
-    //TODO: 
-	if t != ImageMessage && t != VideoMessage {
-		panic("Type must be 'video' or 'image")
-	}
-	p := newPayload(t)
-
-	m := &MediaPayload{
-		Id: id,
-	}
-	if t == ImageMessage {
-		p.Image = m
-	} else {
-		p.Video = m
-	}
-	return p
-}
-
 func NewDocumentPayload(link string, caption string, filename string) *Payload {
 	p := newPayload(DocumentMessage)
-	p.Document = &DocumentPayload{
+    doc := DocumentPayload{
 		Link:     link,
 		Caption:  caption,
 		Filename: filename,
 	}
+    p.Data = &doc
 	return p
+}
+
+func (m *MediaPayload) validate() error {
+    if (m.Link != "") && (m.ID != "") {
+        return fmt.Errorf("media payload cant have both link and id")
+    }
+    return nil
+}
+
+func (m *DocumentPayload) validate() error {
+    return nil
+}
+func (m *TemplatePayload) validate() error {
+    return nil
+}
+func (m *TextPayload) validate() error {
+    return nil
 }
 
 func (w *Whatsapp) Send(to string, payload *Payload) (*Response, error) {
     payload.To = to
-
 	jsonBody, _ := json.Marshal(payload)
     fmt.Println(string(jsonBody))
+    if err := payload.Data.validate(); err != nil {
+        return nil, err
+    }
+
 	w.logger.Debug("Sending message", "to", payload.To, "t", payload.Type)
 	bodyReader := bytes.NewReader(jsonBody)
 
-    fmt.Println(w.url)
 	req, err := http.NewRequest(http.MethodPost, w.url, bodyReader)
 	if err != nil {
 		return nil, err
@@ -110,33 +112,42 @@ func (w *Whatsapp) Send(to string, payload *Payload) (*Response, error) {
 	}
 	defer res.Body.Close()
 
-    if res.StatusCode != http.StatusOK {
-        return nil, fmt.Errorf("message not sended status code: %s", res.Status)
-    }
-
 	var data Response
     if err = json.NewDecoder(res.Body).Decode(&data); err != nil {
         return nil, err
+    }
+
+    if data.Error != nil {
+        fmt.Println(data.Error)
+        return nil, fmt.Errorf("%s %s", data.Error.Message, data.Error.Type)
+    }
+
+    if res.StatusCode != http.StatusOK {
+        return &data, fmt.Errorf("message not sended status code: %s", res.Status)
     }
 
     // w.logger.Info("Message sended succesfully", "to", payload.To, "t", payload.Type, "id", data.Messages[0].Id)
 	return &data, nil
 }
 
-func (w *Whatsapp) SendTemplate(to string, template TemplatePayload) (*Response, error) {
-	p := newPayload(TemplateMessage)
-	p.Template = &template
-	return w.Send(to, p)
-}
+// func (w *Whatsapp) SendTemplate(to string, template TemplatePayload) (*Response, error) {
+// 	p := newPayload(TemplateMessage)
+// 	p.Template = &template
+// 	return w.Send(to, p)
+// }
 
 func (w *Whatsapp) SendText(to string, message string) (*Response, error) {
 	return w.Send(to, newTextPayload(message))
 }
 
-func (w *Whatsapp) SendImage(to string, imageId string) {
-	w.Send(to, NewMediaPayload(imageId, ImageMessage))
+func (w *Whatsapp) SendImage(to string, media MediaPayload) (*Response, error){
+    p := newPayload(ImageMessage)
+    p.Data = &media
+	return w.Send(to, p)
 }
 
-func (w *Whatsapp) SendVideo(to string, videoId string) {
-	w.Send(to, NewMediaPayload(videoId, VideoMessage))
+func (w *Whatsapp) SendVideo(to string, media MediaPayload) (*Response, error) {
+    p := newPayload(VideoMessage)
+    p.Data = &media
+	return w.Send(to, p)
 }

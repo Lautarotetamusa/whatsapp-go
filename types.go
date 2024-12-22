@@ -1,7 +1,9 @@
 package whatsapp
 
 import (
+	"encoding/json"
 	"net/http"
+	"reflect"
 
 	"log/slog"
 )
@@ -22,6 +24,14 @@ type Response struct {
 	Messages []struct {
 		Id string `json:"id"`
 	}
+    Error *ResponseError `json:"error,omitempty"`
+}
+
+type ResponseError struct {
+    Code        int `json:"code"`
+    FbtraceId   string  `json:"fbtrace_id"`
+    Message     string  `json:"message"`
+    Type        string  `json:"type"`
 }
 
 type TextPayload struct {
@@ -30,7 +40,12 @@ type TextPayload struct {
 }
 
 type MediaPayload struct {
-	Id string `json:"id"`
+    // Optional
+    Caption string     `json:"caption"`
+
+    // Only one of
+    Link    string     `json:"link"`
+	ID      string     `json:"id"`
 }
 
 type DocumentPayload struct {
@@ -63,15 +78,37 @@ type Language struct {
 	Code string `json:"code"`
 }
 
+// The payload data types must implement this interface
+type PayloadType interface {
+    validate() error
+}
+
 type Payload struct {
 	MessagingProduct string           `default:"whatsapp" json:"messaging_product"`
 	RecipientType    string           `default:"individual" json:"recipient_type"`
 	To               string           `json:"to"`
 	Type             MessageType      `json:"type"`
 
-	Text             *TextPayload     `json:"text,omitempty"`
-	Template         *TemplatePayload `json:"template,omitempty"`
-	Image            *MediaPayload    `json:"image,omitempty"`
-	Video            *MediaPayload    `json:"video,omitempty"`
-	Document         *DocumentPayload `json:"document,omitempty"`
+    Data             PayloadType
+}
+
+func (p *Payload) MarshalJSON() ([]byte, error) {
+    // Create a map to hold the payload data
+    dataMap := map[string]any{
+        "messaging_product": p.MessagingProduct,
+        "recipient_type":    p.RecipientType,
+        "to":                p.To,
+        "type":              p.Type.String(),
+    }
+
+    // Add the Data field to the map
+    if p.Data != nil {
+        dataValue := reflect.ValueOf(p.Data)
+        if dataValue.Kind() == reflect.Ptr {
+            dataValue = dataValue.Elem()
+        }
+        dataMap[p.Type.String()] = dataValue.Interface()
+    }
+
+    return json.Marshal(dataMap)
 }

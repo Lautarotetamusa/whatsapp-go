@@ -18,10 +18,13 @@ func main(){
 
     webhook := whatsapp.NewWebhook(verifyToken)
     webhook.OnStatusChange(func (s *whatsapp.Status){
-        fmt.Printf("status changed %#v\n", s)
+        fmt.Printf("status changed: %#v\n", s)
+    })
+    webhook.OnNewMessage(func (m *whatsapp.Message) {
+        fmt.Printf("new message recived: %#v\n", m)
     })
 
     fmt.Println("Server running")
 
-    http.ListenAndServe(":8080", webhook)
+    http.ListenAndServe(":3000", webhook)
 }

@@ -25,8 +25,8 @@ func defaultWhatsapp() *Whatsapp {
     if !ok || numberId == "" {
         panic("NUMBER_ID is required in the environment")
     }
-    fmt.Println(accessToken)
-    fmt.Println(numberId)
+    // fmt.Println(accessToken)
+    // fmt.Println(numberId)
 
     logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
     w := NewWhatsapp(accessToken, numberId, logger)
@@ -48,5 +48,57 @@ func TestSendTextWithUrl(t *testing.T){
     fmt.Printf("%v\n", res)
     if err != nil {
         t.Fatalf("%s\n", err)
+    }
+}
+
+func TestSendImageWithId(t *testing.T) {
+    w := defaultWhatsapp()
+    //TODO: this id lasts 15 days, the test will fail
+    imageId := "903533311949481"
+
+    payload := MediaPayload{
+        ID: &imageId,
+        Caption: "Test image",
+    }
+
+    res, err := w.SendImage(to, payload)
+
+    fmt.Printf("%v\n", res)
+    if err != nil {
+        t.Fatalf("%s\n", err)
+    }
+}
+
+func TestSendVideoWithId(t *testing.T) {
+    w := defaultWhatsapp()
+    //TODO: this id lasts 15 days, the test will fail
+    imageId := "967038865474431"
+
+    payload := MediaPayload{
+        ID: &imageId,
+        Caption: "Test video",
+    }
+
+    res, err := w.SendVideo(to, payload)
+
+    fmt.Printf("%v\n", res)
+    if err != nil {
+        t.Fatalf("%s\n", err)
+    }
+}
+
+func TestMediaCantHaveIdAndLink(t *testing.T) {
+    w := defaultWhatsapp()
+
+    imageId := "12345"
+    link := "hola.com"
+    payload := MediaPayload{
+        ID: &imageId,
+        Link: &link,
+    }
+
+    _, err := w.SendImage(to, payload)
+    if err == nil {
+        t.Fatalf("media with id and link must be an error")
     }
 }
