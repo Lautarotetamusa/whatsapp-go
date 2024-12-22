@@ -1,8 +1,6 @@
 package whatsapp
 
 import (
-	"fmt"
-	"log/slog"
 	"os"
 	"testing"
 
@@ -11,7 +9,13 @@ import (
 
 const to = "54341155854220"
 
-func defaultWhatsapp() *Whatsapp {
+var wa *Whatsapp
+
+func getWhatsapp() *Whatsapp {
+    if wa != nil {
+        return wa
+    }
+
 	if err := godotenv.Load("./.env"); err != nil {
 		panic("Unable to load .env file")
     }
@@ -28,31 +32,28 @@ func defaultWhatsapp() *Whatsapp {
     // fmt.Println(accessToken)
     // fmt.Println(numberId)
 
-    logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
-    w := NewWhatsapp(accessToken, numberId, logger)
-    return w
+    wa = NewWhatsapp(accessToken, numberId)    
+    return wa
 }
 
 func TestSendText(t *testing.T){
-    w := defaultWhatsapp()
-    res, err := w.SendText(to, "hola")
-    fmt.Printf("%v\n", res)
+    w := getWhatsapp()
+    _, err := w.SendText(to, "hola")
     if err != nil {
         t.Fatalf("%s\n", err)
     }
 }
 
 func TestSendTextWithUrl(t *testing.T){
-    w := defaultWhatsapp()
-    res, err := w.SendText(to, "https://www.youtube.com/watch?v=q1j7KygaRBo")
-    fmt.Printf("%v\n", res)
+    w := getWhatsapp()
+    _, err := w.SendText(to, "https://www.youtube.com/watch?v=q1j7KygaRBo")
     if err != nil {
         t.Fatalf("%s\n", err)
     }
 }
 
 func TestSendImageWithId(t *testing.T) {
-    w := defaultWhatsapp()
+    w := getWhatsapp()
     //TODO: this id lasts 15 days, the test will fail
     imageId := "903533311949481"
 
@@ -61,16 +62,14 @@ func TestSendImageWithId(t *testing.T) {
         Caption: "Test image",
     }
 
-    res, err := w.SendImage(to, payload)
-
-    fmt.Printf("%v\n", res)
+    _, err := w.SendImage(to, payload)
     if err != nil {
         t.Fatalf("%s\n", err)
     }
 }
 
 func TestSendVideoWithId(t *testing.T) {
-    w := defaultWhatsapp()
+    w := getWhatsapp()
     //TODO: this id lasts 15 days, the test will fail
     imageId := "967038865474431"
 
@@ -79,16 +78,14 @@ func TestSendVideoWithId(t *testing.T) {
         Caption: "Test video",
     }
 
-    res, err := w.SendVideo(to, payload)
-
-    fmt.Printf("%v\n", res)
+    _, err := w.SendVideo(to, payload)
     if err != nil {
         t.Fatalf("%s\n", err)
     }
 }
 
 func TestMediaCantHaveIdAndLink(t *testing.T) {
-    w := defaultWhatsapp()
+    w := getWhatsapp()
 
     imageId := "12345"
     payload := MediaPayload{
@@ -103,7 +100,7 @@ func TestMediaCantHaveIdAndLink(t *testing.T) {
 }
 
 func TestSendDocument(t *testing.T) {
-    w := defaultWhatsapp()
+    w := getWhatsapp()
     //TODO: this id lasts 15 days, the test will fail
     docId := "903533311949481"
 
@@ -113,16 +110,14 @@ func TestSendDocument(t *testing.T) {
         Filename: "test_file.pdf",
     }
 
-    res, err := w.SendDocument(to, payload)
-
-    fmt.Printf("%v\n", res)
+    _, err := w.SendDocument(to, payload)
     if err != nil {
         t.Fatalf("%s\n", err)
     }
 }
 
 func TestDocumentCantHaveIdAndLink(t *testing.T) {
-    w := defaultWhatsapp()
+    w := getWhatsapp()
 
     payload := DocumentPayload{
         ID: "12345",

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -13,7 +12,7 @@ import (
 const version = "v21.0"
 const baseUrl = "https://graph.facebook.com/%s/%s/messages"
 
-func NewWhatsapp(accessToken string, numberId string, l *slog.Logger) *Whatsapp {
+func NewWhatsapp(accessToken string, numberId string) *Whatsapp {
 	return &Whatsapp{
 		client: &http.Client{
 			Timeout: 15 * time.Second,
@@ -21,7 +20,6 @@ func NewWhatsapp(accessToken string, numberId string, l *slog.Logger) *Whatsapp 
 		accessToken: accessToken,
 		numberId:    numberId,
 		url:         fmt.Sprintf(baseUrl, version, numberId),
-        logger:      l.With("module", "whatsapp"),
 	}
 }
 
@@ -77,12 +75,11 @@ func (m *TextPayload) validate() error {
 func (w *Whatsapp) Send(to string, payload *Payload) (*Response, error) {
     payload.To = to
 	jsonBody, _ := json.Marshal(payload)
-    fmt.Println(string(jsonBody))
+
     if err := payload.Data.validate(); err != nil {
         return nil, err
     }
 
-	w.logger.Debug("Sending message", "to", payload.To, "t", payload.Type)
 	bodyReader := bytes.NewReader(jsonBody)
 
 	req, err := http.NewRequest(http.MethodPost, w.url, bodyReader)
@@ -114,15 +111,8 @@ func (w *Whatsapp) Send(to string, payload *Payload) (*Response, error) {
         return &data, fmt.Errorf("message not sended status code: %s", res.Status)
     }
 
-    // w.logger.Info("Message sended succesfully", "to", payload.To, "t", payload.Type, "id", data.Messages[0].Id)
 	return &data, nil
 }
-
-// func (w *Whatsapp) SendTemplate(to string, template TemplatePayload) (*Response, error) {
-// 	p := newPayload(TemplateMessage)
-// 	p.Template = &template
-// 	return w.Send(to, p)
-// }
 
 func (w *Whatsapp) SendText(to string, message string) (*Response, error) {
 	return w.Send(to, newTextPayload(message))

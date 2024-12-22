@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"reflect"
-
-	"log/slog"
 )
 
 type Whatsapp struct {
@@ -13,7 +11,6 @@ type Whatsapp struct {
 	numberId    string
 	client      *http.Client
 	url         string
-    logger      *slog.Logger
 }
 
 type Response struct {
