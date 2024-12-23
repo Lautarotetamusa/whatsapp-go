@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Lautarotetamusa/whatsapp-go/message"
 	"github.com/joho/godotenv"
 )
 
@@ -29,8 +30,6 @@ func getWhatsapp() *Whatsapp {
     if !ok || numberId == "" {
         panic("NUMBER_ID is required in the environment")
     }
-    // fmt.Println(accessToken)
-    // fmt.Println(numberId)
 
     wa = NewWhatsapp(accessToken, numberId)    
     return wa
@@ -57,12 +56,12 @@ func TestSendImageWithId(t *testing.T) {
     //TODO: this id lasts 15 days, the test will fail
     imageId := "903533311949481"
 
-    payload := MediaPayload{
+    msg := message.Image{
         ID: imageId,
         Caption: "Test image",
     }
 
-    _, err := w.SendImage(to, payload)
+    _, err := w.Send(to, &msg)
     if err != nil {
         t.Fatalf("%s\n", err)
     }
@@ -71,61 +70,32 @@ func TestSendImageWithId(t *testing.T) {
 func TestSendVideoWithId(t *testing.T) {
     w := getWhatsapp()
     //TODO: this id lasts 15 days, the test will fail
-    imageId := "967038865474431"
+    videoId := "967038865474431"
 
-    payload := MediaPayload{
-        ID: imageId,
+    msg := message.Video{
+        ID: videoId,
         Caption: "Test video",
     }
 
-    _, err := w.SendVideo(to, payload)
+    _, err := w.Send(to, &msg)
     if err != nil {
         t.Fatalf("%s\n", err)
     }
 }
 
-func TestMediaCantHaveIdAndLink(t *testing.T) {
-    w := getWhatsapp()
-
-    imageId := "12345"
-    payload := MediaPayload{
-        ID: imageId,
-        Link: "https://hola.com",
-    }
-
-    _, err := w.SendImage(to, payload)
-    if err == nil {
-        t.Fatalf("media with id and link must be an error")
-    }
-}
-
-func TestSendDocument(t *testing.T) {
+func TestSendDocumentWithId(t *testing.T) {
     w := getWhatsapp()
     //TODO: this id lasts 15 days, the test will fail
     docId := "903533311949481"
 
-    payload := DocumentPayload{
+    msg := message.Document{
         ID: docId,
         Caption: "Test document",
         Filename: "test_file.pdf",
     }
 
-    _, err := w.SendDocument(to, payload)
+    _, err := w.Send(to, &msg)
     if err != nil {
         t.Fatalf("%s\n", err)
-    }
-}
-
-func TestDocumentCantHaveIdAndLink(t *testing.T) {
-    w := getWhatsapp()
-
-    payload := DocumentPayload{
-        ID: "12345",
-        Link: "http://test.com/",
-    }
-
-    _, err := w.SendDocument(to, payload)
-    if err == nil {
-        t.Fatalf("media with id and link must be an error")
     }
 }

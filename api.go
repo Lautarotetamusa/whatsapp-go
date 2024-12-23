@@ -5,12 +5,91 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
+
+	"github.com/Lautarotetamusa/whatsapp-go/message"
 )
 
-const version = "v21.0"
-const baseUrl = "https://graph.facebook.com/%s/%s/messages"
+const (
+    version = "v21.0"
+    baseUrl = "https://graph.facebook.com/%s/%s/messages"
+)
+
+type Whatsapp struct {
+	accessToken string
+	numberId    string
+	client      *http.Client
+	url         string
+}
+
+type Response struct {
+	Contacts []struct {
+		Input string `json:"input"`
+		WaId  string `json:"wa_id"`
+	}
+	Messages []struct {
+		Id string `json:"id"`
+	}
+    Error *ResponseError `json:"error,omitempty"`
+}
+
+type ResponseError struct {
+    Code        int `json:"code"`
+    FbtraceId   string  `json:"fbtrace_id"`
+    Message     string  `json:"message"`
+    Type        string  `json:"type"`
+}
+
+type Payload struct {
+	MessagingProduct string           `default:"whatsapp" json:"messaging_product"`
+	RecipientType    string           `default:"individual" json:"recipient_type"`
+	To               string           `json:"to"`
+
+    Data             message.Message
+}
+
+func newPayload(data message.Message) *Payload {
+	return &Payload{
+        MessagingProduct: "whatsapp",
+        RecipientType: "individual",
+        Data: data,
+	}
+}
+
+func (p *Payload) MarshalJSON() ([]byte, error) {
+    if p.Data == nil {
+        return nil, fmt.Errorf("payload data its empty")
+    }
+    typeName := p.Data.TypeName() 
+
+    // Create a map to hold the payload data
+    dataMap := map[string]any{
+        "messaging_product": p.MessagingProduct,
+        "recipient_type":    p.RecipientType,
+        "to":                p.To,
+        "type":              typeName,
+    }
+
+    // Add the Data field to the map
+    dataValue := reflect.ValueOf(p.Data)
+    if dataValue.Kind() == reflect.Ptr {
+        dataValue = dataValue.Elem()
+    }
+    dataMap[typeName] = dataValue.Interface()
+
+    return json.Marshal(dataMap)
+}
+
+// https://developers.facebook.com/docs/whatsapp/cloud-api/messages/text-messages
+func newTextPayload(msg string) *message.Text {
+    previewUrl := strings.Contains(msg, "http://") || strings.Contains(msg, "https://")
+	return &message.Text{
+		PreviewUrl: previewUrl,
+		Body:       msg,
+    }
+}
 
 func NewWhatsapp(accessToken string, numberId string) *Whatsapp {
 	return &Whatsapp{
@@ -23,65 +102,19 @@ func NewWhatsapp(accessToken string, numberId string) *Whatsapp {
 	}
 }
 
-func newPayload(t MessageType) *Payload {
-	return &Payload{
-        MessagingProduct: "whatsapp",
-        RecipientType: "individual",
-		Type: t,
-	}
-}
-
-// https://developers.facebook.com/docs/whatsapp/cloud-api/messages/text-messages
-func newTextPayload(message string) *Payload {
-	p := newPayload(TextMessage)
-
-    previewUrl := strings.Contains(message, "http://") || strings.Contains(message, "https://")
-
-	p.Data = &TextPayload{
-		PreviewUrl: previewUrl,
-		Body:       message,
-	}
-	return p
-}
-
-func NewDocumentPayload(link string, caption string, filename string) *Payload {
-	p := newPayload(DocumentMessage)
-    doc := DocumentPayload{
-		Link:     link,
-		Caption:  caption,
-		Filename: filename,
-	}
-    p.Data = &doc
-	return p
-}
-
-func (m *MediaPayload) validate() error {
-    if (m.Link != "") && (m.ID != "") {
-        return fmt.Errorf(ErrorIdAndLink, ImageMessage.String())
-    }
-    return nil
-}
-
-func (m *DocumentPayload) validate() error {
-    if (m.Link != "") && (m.ID != "") {
-        return fmt.Errorf(ErrorIdAndLink, DocumentMessage.String())
-    }
-    return nil
-}
-func (m *TextPayload) validate() error {
-    return nil
-}
-
-func (w *Whatsapp) Send(to string, payload *Payload) (*Response, error) {
+func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
+    payload := newPayload(msg)
     payload.To = to
-	jsonBody, _ := json.Marshal(payload)
 
-    if err := payload.Data.validate(); err != nil {
+	jsonBody, err := json.Marshal(payload)
+    if err != nil {
+        return nil, err
+    }
+    if err := payload.Data.Validate(); err != nil {
         return nil, err
     }
 
 	bodyReader := bytes.NewReader(jsonBody)
-
 	req, err := http.NewRequest(http.MethodPost, w.url, bodyReader)
 	if err != nil {
 		return nil, err
@@ -116,22 +149,4 @@ func (w *Whatsapp) Send(to string, payload *Payload) (*Response, error) {
 
 func (w *Whatsapp) SendText(to string, message string) (*Response, error) {
 	return w.Send(to, newTextPayload(message))
-}
-
-func (w *Whatsapp) SendImage(to string, media MediaPayload) (*Response, error){
-    p := newPayload(ImageMessage)
-    p.Data = &media
-	return w.Send(to, p)
-}
-
-func (w *Whatsapp) SendVideo(to string, media MediaPayload) (*Response, error) {
-    p := newPayload(VideoMessage)
-    p.Data = &media
-	return w.Send(to, p)
-}
-
-func (w *Whatsapp) SendDocument(to string, doc DocumentPayload) (*Response, error) {
-    p := newPayload(DocumentMessage)
-    p.Data = &doc
-	return w.Send(to, p)
 }
