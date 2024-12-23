@@ -21,6 +21,13 @@ jobs:
       with:
         go-version: '1.23.0'
 
+    - name: Create env file
+      run: |
+        touch .env
+        echo ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }} >> .env
+        echo NUMBER_ID=${{ secrets.NUMBER_ID }} >> .env
+        cat .env
+
     - name: Build
       run: go build -v ./...
 
