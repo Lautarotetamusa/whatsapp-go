@@ -1,3 +1,4 @@
+[![Go](https://github.com/Lautarotetamusa/whatsapp-go/actions/workflows/go.yml/badge.svg)](https://github.com/Lautarotetamusa/whatsapp-go/actions/workflows/go.yml)
 # whatsapp cloud api
 
 Simple wraper for the meta cloud api
