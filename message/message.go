@@ -9,7 +9,7 @@ type Message interface {
     // Check if the message its valid
     Validate() error
     // Return the message type name. eg: "video"
-    TypeName() string
+    TypeName() MessageType
 }
 
 type Text struct {
@@ -22,8 +22,8 @@ type Image struct {
     Caption string     `json:"caption,omitempty"`
 
     // Only one of
-    Link    string     `json:"link"`
-	ID      string     `json:"id"`
+    Link    string     `json:"link,omitempty"`
+	ID      string     `json:"id,omitempty"`
 }
 
 type Video struct {
@@ -31,8 +31,8 @@ type Video struct {
     Caption string     `json:"caption,omitempty"`
 
     // Only one of
-    Link    string     `json:"link"`
-	ID      string     `json:"id"`
+    Link    string     `json:"link,omitempty"`
+	ID      string     `json:"id,omitempty"`
 }
 
 type Document struct {
@@ -41,27 +41,27 @@ type Document struct {
 	Caption  string     `json:"caption,omitempty"`
 
     // Only one of
-    Link    string     `json:"link"`
-	ID      string     `json:"id"`
+    Link    string     `json:"link,omitempty"`
+	ID      string     `json:"id,omitempty"`
 }
 
 func (m *Image) Validate() error {
     if (m.Link != "") && (m.ID != "") {
-        return fmt.Errorf(ErrorIdAndLink, m.TypeName())
+        return ErrorIdAndLink
     }
     return nil
 }
 
 func (m *Video) Validate() error {
     if (m.Link != "") && (m.ID != "") {
-        return fmt.Errorf(ErrorIdAndLink, m.TypeName())
+        return ErrorIdAndLink
     }
     return nil
 }
 
 func (m *Document) Validate() error {
     if (m.Link != "") && (m.ID != "") {
-        return fmt.Errorf(ErrorIdAndLink, m.TypeName())
+        return ErrorIdAndLink
     }
     return nil
 }
@@ -73,18 +73,18 @@ func (m *Text) Validate() error {
     return nil
 }
 
-func (m *Image) TypeName() string {
+func (m *Image) TypeName() MessageType {
     return ImageType
 }
 
-func (m *Video) TypeName() string {
+func (m *Video) TypeName() MessageType {
     return VideoType
 }
 
-func (m *Document) TypeName() string {
+func (m *Document) TypeName() MessageType {
     return DocumentType
 }
 
-func (m *Text) TypeName() string {
+func (m *Text) TypeName() MessageType {
     return TextType
 }

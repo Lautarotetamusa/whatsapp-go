@@ -1,19 +1,12 @@
 package message
 
-import (
-	"fmt"
-)
+type PayloadError string
+
+func (e PayloadError) Error() string {
+    return string(e)
+}
 
 const (
-    ErrorIdAndLink string = "either Link or ID must be present in %s message"
+    ErrorIdAndLink PayloadError = "either Link or ID must be present in media message"
 )
-
-type messageNotValidError struct {
-    mType   string
-    message string
-}
-
-func (e *messageNotValidError) Error() string {
-    return fmt.Sprintf("%s - %s", e.mType, e.message)
-}
 

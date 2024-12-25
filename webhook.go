@@ -266,6 +266,9 @@ func parseDeliveryStatus(s string) (DeliveryStatus, error) {
 }
 
 func NewWebhook(verifyToken string) *Webhook {
+    if verifyToken == "" {
+        panic("verifyToken cannot be empty")
+    }
     return &Webhook {
         verifyToken: verifyToken,
     }

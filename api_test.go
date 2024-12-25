@@ -8,8 +8,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const to = "54341155854220"
-
+// For test numbers, the recipient must be on a list of available phones
+const to = "+54 341 15-585-4220"
 var wa *Whatsapp
 
 func getWhatsapp() *Whatsapp {
@@ -39,7 +39,7 @@ func TestSendText(t *testing.T){
     w := getWhatsapp()
     _, err := w.SendText(to, "hola")
     if err != nil {
-        t.Fatalf("%s\n", err)
+        t.Fatal(err)
     }
 }
 
@@ -47,7 +47,7 @@ func TestSendTextWithUrl(t *testing.T){
     w := getWhatsapp()
     _, err := w.SendText(to, "https://www.youtube.com/watch?v=q1j7KygaRBo")
     if err != nil {
-        t.Fatalf("%s\n", err)
+        t.Fatal(err)
     }
 }
 
@@ -63,7 +63,7 @@ func TestSendImageWithId(t *testing.T) {
 
     _, err := w.Send(to, &msg)
     if err != nil {
-        t.Fatalf("%s\n", err)
+        t.Fatal(err)
     }
 }
 
@@ -79,7 +79,7 @@ func TestSendVideoWithId(t *testing.T) {
 
     _, err := w.Send(to, &msg)
     if err != nil {
-        t.Fatalf("%s\n", err)
+        t.Fatal(err)
     }
 }
 
@@ -96,6 +96,6 @@ func TestSendDocumentWithId(t *testing.T) {
 
     _, err := w.Send(to, &msg)
     if err != nil {
-        t.Fatalf("%s\n", err)
+        t.Fatal(err)
     }
 }

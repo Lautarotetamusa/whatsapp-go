@@ -35,49 +35,42 @@ type Response struct {
     Error *ResponseError `json:"error,omitempty"`
 }
 
-type ResponseError struct {
-    Code        int `json:"code"`
-    FbtraceId   string  `json:"fbtrace_id"`
-    Message     string  `json:"message"`
-    Type        string  `json:"type"`
-}
-
 type Payload struct {
-	MessagingProduct string           `default:"whatsapp" json:"messaging_product"`
-	RecipientType    string           `default:"individual" json:"recipient_type"`
-	To               string           `json:"to"`
+	messagingProduct string 
+	recipientType    string
+	to               string
 
-    Data             message.Message
+    data             message.Message
 }
 
-func newPayload(data message.Message) *Payload {
+func NewPayload(data message.Message) *Payload {
 	return &Payload{
-        MessagingProduct: "whatsapp",
-        RecipientType: "individual",
-        Data: data,
+        messagingProduct: "whatsapp",
+        recipientType: "individual",
+        data: data,
 	}
 }
 
 func (p *Payload) MarshalJSON() ([]byte, error) {
-    if p.Data == nil {
+    if p.data == nil {
         return nil, fmt.Errorf("payload data its empty")
     }
-    typeName := p.Data.TypeName() 
+    typeName := p.data.TypeName() 
 
     // Create a map to hold the payload data
     dataMap := map[string]any{
-        "messaging_product": p.MessagingProduct,
-        "recipient_type":    p.RecipientType,
-        "to":                p.To,
+        "messaging_product": p.messagingProduct,
+        "recipient_type":    p.recipientType,
+        "to":                p.to,
         "type":              typeName,
     }
 
     // Add the Data field to the map
-    dataValue := reflect.ValueOf(p.Data)
+    dataValue := reflect.ValueOf(p.data)
     if dataValue.Kind() == reflect.Ptr {
         dataValue = dataValue.Elem()
     }
-    dataMap[typeName] = dataValue.Interface()
+    dataMap[string(typeName)] = dataValue.Interface()
 
     return json.Marshal(dataMap)
 }
@@ -91,7 +84,10 @@ func newTextPayload(msg string) *message.Text {
     }
 }
 
-func NewWhatsapp(accessToken string, numberId string) *Whatsapp {
+func NewWhatsapp(accessToken, numberId string) *Whatsapp {
+    if accessToken == "" || numberId == "" {
+        panic("accessToken and numberId cannot be empty")
+    }
 	return &Whatsapp{
 		client: &http.Client{
 			Timeout: 15 * time.Second,
@@ -103,14 +99,17 @@ func NewWhatsapp(accessToken string, numberId string) *Whatsapp {
 }
 
 func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
-    payload := newPayload(msg)
-    payload.To = to
+    if to == "" {
+        return nil, fmt.Errorf("recipient phone cannot be empty")
+    }
+    payload := NewPayload(msg)
+    payload.to = to
 
 	jsonBody, err := json.Marshal(payload)
     if err != nil {
         return nil, err
     }
-    if err := payload.Data.Validate(); err != nil {
+    if err := payload.data.Validate(); err != nil {
         return nil, err
     }
 
@@ -136,12 +135,11 @@ func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
     }
 
     if data.Error != nil {
-        fmt.Println(data.Error)
-        return nil, fmt.Errorf("%s %s", data.Error.Message, data.Error.Type)
+        return nil, data.Error
     }
 
     if res.StatusCode != http.StatusOK {
-        return &data, fmt.Errorf("message not sended status code: %s", res.Status)
+        return nil, data.Error
     }
 
 	return &data, nil
