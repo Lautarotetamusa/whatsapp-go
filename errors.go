@@ -10,5 +10,5 @@ type ResponseError struct {
 }
 
 func (e *ResponseError) Error() string {
-    return fmt.Sprintf("(%d)%s - %s trace: %s", e.Code, e.Type, e.Message, e.FbtraceId)
+    return fmt.Sprintf("(%d) %s - %s\nfbtrace_id: %s", e.Code, e.Type, e.Message, e.FbtraceId)
 }

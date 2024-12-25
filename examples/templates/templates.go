@@ -17,17 +17,29 @@ func main(){
 
     accessToken := os.Getenv("ACCESS_TOKEN")
     numberId    := os.Getenv("NUMBER_ID")
+    recipient   := os.Getenv("RECIPIENT")  // valid number with country code
 
     wa := whatsapp.NewWhatsapp(accessToken, numberId)
-    recipient := "+54 341 15-585-4220" // put a valid number with country code
 
-    template := message.NewTemplate("image_template", "es_AR").
+    template := message.NewTemplate("image_template", message.SpanishARG).
         AddComponent(
             *message.NewHeaderComponent().
             AddParameter(&message.Image{ 
                 ID: "903533311949481",
             }),
         )
+
+    // Maybe this style its better?
+    // t := message.NewTemplate("image_template", "es_AR", 
+    //     NewHeaderComponent(
+    //         &message.Image{ 
+    //             ID: "903533311949481",
+    //         }
+    //     ),
+    //     NewBodyComponent(
+    //         &message.Text{}
+    //     )
+    // ).
 
     payload := whatsapp.NewPayload(template)
     t, err := json.MarshalIndent(payload, "", "   ")
@@ -37,7 +49,7 @@ func main(){
     res, err := wa.Send(recipient, template)
 
     if err != nil {
-        fmt.Printf("%#v\n", err)
+        fmt.Println(err)
         panic("cannot send the message")
     }
     fmt.Printf("Message sended succesfully! Response %#v\n", res)

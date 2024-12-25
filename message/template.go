@@ -13,6 +13,10 @@ type Template struct {
 	Components []Component  `json:"components"`
 }
 
+type Language struct {
+	Code LanguageCode `json:"code"`
+}
+
 func (t *Template) Validate() error {
     // TODO
     return nil
@@ -23,23 +27,13 @@ func (t *Template) TypeName() MessageType {
 }
 
 type Parameter struct {
-    // Type        MessageType         `json:"type"`
-    //
     data        Message
-    // Text        string           `json:"text,omitempty"`
-	// Image       *MediaPayload    `json:"image,omitempty"`
-	// Video       *MediaPayload    `json:"video,omitempty"`
-	// Document    *DocumentPayload `json:"document,omitempty"`
 }
 
 type Component struct {
     Type       ComponentType    `json:"type"`
 
 	Parameters []Parameter      `json:"parameters"`
-}
-
-type Language struct {
-	Code string `json:"code"`
 }
 
 func (p *Parameter) MarshalJSON() ([]byte, error) {
@@ -50,7 +44,7 @@ func (p *Parameter) MarshalJSON() ([]byte, error) {
 
     // Create a map to hold the payload data
     dataMap := map[string]any{
-        "type":              typeName,
+        "type": typeName,
     }
 
     // Add the Data field to the map
@@ -63,7 +57,7 @@ func (p *Parameter) MarshalJSON() ([]byte, error) {
     return json.Marshal(dataMap)
 }
 
-func NewTemplate(name, langCode string) *Template {
+func NewTemplate(name string, langCode LanguageCode) *Template {
     return &Template{
         Name: name,
         Language: Language{
