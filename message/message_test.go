@@ -4,8 +4,10 @@ import "testing"
 
 func TestImageCantHaveIdAndLink(t *testing.T) {
     msg := Image{
-        ID: "12345",
-        Link: "https://hola.com",
+        Media: &Media{
+            ID: "12345",
+            Link: "https://hola.com",
+        },
     }
 
     if err := msg.Validate(); err == nil {
@@ -15,8 +17,10 @@ func TestImageCantHaveIdAndLink(t *testing.T) {
 
 func TestVideoCantHaveIdAndLink(t *testing.T) {
     msg := Video{
-        ID: "12345",
-        Link: "https://hola.com",
+        Media: &Media{
+            ID: "12345",
+            Link: "https://hola.com",
+        },
     }
 
     if err := msg.Validate(); err == nil {
@@ -26,8 +30,10 @@ func TestVideoCantHaveIdAndLink(t *testing.T) {
 
 func TestDocumentCantHaveIdAndLink(t *testing.T) {
     msg := Document{
-        ID: "12345",
-        Link: "http://test.com/",
+        Media: &Media{
+            ID: "12345",
+            Link: "https://hola.com",
+        },
     }
 
     if err := msg.Validate(); err == nil {

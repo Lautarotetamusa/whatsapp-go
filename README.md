@@ -38,10 +38,10 @@ func main(){
 
 ### Sending a image
 ```go
-    res, err := wa.Send("recipient-phone", &message.Image{
-        ID: "valid-image-id",
-        Caption: "Test image",
-    })
+res, err := wa.Send("recipient-phone", &message.Image{
+    ID: "valid-image-id",
+    Caption: "Test image",
+})
 ```
 
 ## Webhook

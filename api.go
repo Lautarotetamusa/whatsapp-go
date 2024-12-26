@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Lautarotetamusa/whatsapp-go/message"
@@ -42,11 +41,12 @@ type Payload struct {
 	data message.Message
 }
 
-func NewPayload(data message.Message) *Payload {
+func NewPayload(to string, data message.Message) *Payload {
 	return &Payload{
 		messagingProduct: "whatsapp",
 		recipientType:    "individual",
 		data:             data,
+		to:               to,
 	}
 }
 
@@ -69,15 +69,6 @@ func (p *Payload) MarshalJSON() ([]byte, error) {
 	return json.Marshal(dataMap)
 }
 
-// https://developers.facebook.com/docs/whatsapp/cloud-api/messages/text-messages
-func newTextPayload(msg string) *message.Text {
-	previewUrl := strings.Contains(msg, "http://") || strings.Contains(msg, "https://")
-	return &message.Text{
-		PreviewUrl: previewUrl,
-		Body:       msg,
-	}
-}
-
 func NewWhatsapp(accessToken, numberId string) *Whatsapp {
 	if accessToken == "" || numberId == "" {
 		panic("accessToken and numberId cannot be empty")
@@ -96,14 +87,13 @@ func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
 	if to == "" {
 		return nil, fmt.Errorf("recipient phone cannot be empty")
 	}
-	payload := NewPayload(msg)
-	payload.to = to
+	payload := NewPayload(to, msg)
+	if err := payload.data.Validate(); err != nil {
+		return nil, err
+	}
 
 	jsonBody, err := json.Marshal(payload)
 	if err != nil {
-		return nil, err
-	}
-	if err := payload.data.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -139,6 +129,6 @@ func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
 	return &data, nil
 }
 
-func (w *Whatsapp) SendText(to string, message string) (*Response, error) {
-	return w.Send(to, newTextPayload(message))
+func (w *Whatsapp) SendText(to string, msg string) (*Response, error) {
+	return w.Send(to, message.NewTextMessage(msg))
 }

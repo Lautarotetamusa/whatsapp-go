@@ -10,7 +10,7 @@ import (
 
 func main(){
     m := &message.Video{
-        ID: "valid-id",
+        Media: message.FromID("123"),
     }
 
     payload := whatsapp.NewPayload(m)

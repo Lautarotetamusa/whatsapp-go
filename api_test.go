@@ -58,7 +58,7 @@ func TestSendImageWithId(t *testing.T) {
 	imageId := "903533311949481"
 
 	msg := message.Image{
-		ID:      imageId,
+		Media:   message.FromID(imageId),
 		Caption: "Test image",
 	}
 
@@ -74,7 +74,7 @@ func TestSendVideoWithId(t *testing.T) {
 	videoId := "967038865474431"
 
 	msg := message.Video{
-		ID:      videoId,
+		Media:   message.FromID(videoId),
 		Caption: "Test video",
 	}
 
@@ -90,9 +90,39 @@ func TestSendDocumentWithId(t *testing.T) {
 	docId := "903533311949481"
 
 	msg := message.Document{
-		ID:       docId,
+		Media:    message.FromID(docId),
 		Caption:  "Test document",
 		Filename: "test_file.pdf",
+	}
+
+	_, err := w.Send(to, &msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSendAudioWithId(t *testing.T) {
+	w := getWhatsapp()
+	//TODO: this id lasts 15 days, the test will fail
+	audioId := "903533311949481"
+
+	msg := message.Audio{
+		Media: message.FromID(audioId),
+	}
+
+	_, err := w.Send(to, &msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSendStickerWithId(t *testing.T) {
+	w := getWhatsapp()
+	//TODO: this id lasts 15 days, the test will fail
+	stickerId := "903533311949481"
+
+	msg := message.Sticker{
+		Media: message.FromID(stickerId),
 	}
 
 	_, err := w.Send(to, &msg)

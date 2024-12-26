@@ -25,16 +25,16 @@ func main(){
         AddComponent(
             *message.NewHeaderComponent().
             AddParameter(&message.Image{ 
-                ID: "903533311949481",
+                Media: message.FromID("903533311949481"),
             }),
         )
 
     // Maybe this style its better?
     // t := message.NewTemplate("image_template", "es_AR", 
     //     NewHeaderComponent(
-    //         &message.Image{ 
-    //             ID: "903533311949481",
-    //         }
+    //          &message.Image{ 
+    //              Media: message.FromID("903533311949481"),
+    //          }
     //     ),
     //     NewBodyComponent(
     //         &message.Text{}
