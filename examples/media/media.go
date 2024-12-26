@@ -12,8 +12,10 @@ func main(){
     m := &message.Video{
         Media: message.FromID("123"),
     }
+    // valid phone number
+    to := "12345678900"
 
-    payload := whatsapp.NewPayload(m)
+    payload := whatsapp.NewPayload(to, m)
     t, err := json.MarshalIndent(payload, "", "   ")
     fmt.Println(err)
     fmt.Printf("%s\n", string(t))
