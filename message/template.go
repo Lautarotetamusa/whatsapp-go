@@ -3,7 +3,6 @@ package message
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 // https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates/
@@ -40,19 +39,14 @@ func (p *Parameter) MarshalJSON() ([]byte, error) {
     if p.data == nil {
         return nil, fmt.Errorf("payload data its empty")
     }
-    typeName := p.data.TypeName() 
+    typ := p.data.GetType() 
 
     // Create a map to hold the payload data
     dataMap := map[string]any{
-        "type": typeName,
+        "type": typ,
+        // the Data field. eg. "video": p.data
+        string(typ): p.data,
     }
-
-    // Add the Data field to the map
-    dataValue := reflect.ValueOf(p.data)
-    if dataValue.Kind() == reflect.Ptr {
-        dataValue = dataValue.Elem()
-    }
-    dataMap[string(typeName)] = dataValue.Interface()
 
     return json.Marshal(dataMap)
 }

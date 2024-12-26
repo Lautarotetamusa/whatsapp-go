@@ -4,6 +4,8 @@ type MessageType string
 const (
     TextType        MessageType = "text"
     ImageType       MessageType = "image"
+    AudioType       MessageType = "audio"
+    StickerType     MessageType = "sticker"
     VideoType       MessageType = "video"
     DocumentType    MessageType = "document"
     TemplateType    MessageType = "template"

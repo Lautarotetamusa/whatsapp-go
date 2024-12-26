@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strings"
 	"time"
 
@@ -13,8 +12,8 @@ import (
 )
 
 const (
-    version = "v21.0"
-    baseUrl = "https://graph.facebook.com/%s/%s/messages"
+	version = "v21.0"
+	baseUrl = "https://graph.facebook.com/%s/%s/messages"
 )
 
 type Whatsapp struct {
@@ -32,62 +31,57 @@ type Response struct {
 	Messages []struct {
 		Id string `json:"id"`
 	}
-    Error *ResponseError `json:"error,omitempty"`
+	Error *ResponseError `json:"error,omitempty"`
 }
 
 type Payload struct {
-	messagingProduct string 
+	messagingProduct string
 	recipientType    string
 	to               string
 
-    data             message.Message
+	data message.Message
 }
 
 func NewPayload(data message.Message) *Payload {
 	return &Payload{
-        messagingProduct: "whatsapp",
-        recipientType: "individual",
-        data: data,
+		messagingProduct: "whatsapp",
+		recipientType:    "individual",
+		data:             data,
 	}
 }
 
 func (p *Payload) MarshalJSON() ([]byte, error) {
-    if p.data == nil {
-        return nil, fmt.Errorf("payload data its empty")
-    }
-    typeName := p.data.TypeName() 
+	if p.data == nil {
+		return nil, fmt.Errorf("payload data its empty")
+	}
+	typ := p.data.GetType()
 
-    // Create a map to hold the payload data
-    dataMap := map[string]any{
-        "messaging_product": p.messagingProduct,
-        "recipient_type":    p.recipientType,
-        "to":                p.to,
-        "type":              typeName,
-    }
+	// Create a map to hold the payload data
+	dataMap := map[string]any{
+		"messaging_product": p.messagingProduct,
+		"recipient_type":    p.recipientType,
+		"to":                p.to,
+		"type":              typ,
+	}
+	// Add the Data field to the map
+	dataMap[string(typ)] = p.data
 
-    // Add the Data field to the map
-    dataValue := reflect.ValueOf(p.data)
-    if dataValue.Kind() == reflect.Ptr {
-        dataValue = dataValue.Elem()
-    }
-    dataMap[string(typeName)] = dataValue.Interface()
-
-    return json.Marshal(dataMap)
+	return json.Marshal(dataMap)
 }
 
 // https://developers.facebook.com/docs/whatsapp/cloud-api/messages/text-messages
 func newTextPayload(msg string) *message.Text {
-    previewUrl := strings.Contains(msg, "http://") || strings.Contains(msg, "https://")
+	previewUrl := strings.Contains(msg, "http://") || strings.Contains(msg, "https://")
 	return &message.Text{
 		PreviewUrl: previewUrl,
 		Body:       msg,
-    }
+	}
 }
 
 func NewWhatsapp(accessToken, numberId string) *Whatsapp {
-    if accessToken == "" || numberId == "" {
-        panic("accessToken and numberId cannot be empty")
-    }
+	if accessToken == "" || numberId == "" {
+		panic("accessToken and numberId cannot be empty")
+	}
 	return &Whatsapp{
 		client: &http.Client{
 			Timeout: 15 * time.Second,
@@ -99,19 +93,19 @@ func NewWhatsapp(accessToken, numberId string) *Whatsapp {
 }
 
 func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
-    if to == "" {
-        return nil, fmt.Errorf("recipient phone cannot be empty")
-    }
-    payload := NewPayload(msg)
-    payload.to = to
+	if to == "" {
+		return nil, fmt.Errorf("recipient phone cannot be empty")
+	}
+	payload := NewPayload(msg)
+	payload.to = to
 
 	jsonBody, err := json.Marshal(payload)
-    if err != nil {
-        return nil, err
-    }
-    if err := payload.data.Validate(); err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
+	if err := payload.data.Validate(); err != nil {
+		return nil, err
+	}
 
 	bodyReader := bytes.NewReader(jsonBody)
 	req, err := http.NewRequest(http.MethodPost, w.url, bodyReader)
@@ -125,22 +119,22 @@ func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
 
 	res, err := w.client.Do(req)
 	if err != nil {
-        return nil, fmt.Errorf("Request error: %s", err)
+		return nil, fmt.Errorf("Request error: %s", err)
 	}
 	defer res.Body.Close()
 
 	var data Response
-    if err = json.NewDecoder(res.Body).Decode(&data); err != nil {
-        return nil, err
-    }
+	if err = json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
 
-    if data.Error != nil {
-        return nil, data.Error
-    }
+	if data.Error != nil {
+		return nil, data.Error
+	}
 
-    if res.StatusCode != http.StatusOK {
-        return nil, data.Error
-    }
+	if res.StatusCode != http.StatusOK {
+		return nil, data.Error
+	}
 
 	return &data, nil
 }
