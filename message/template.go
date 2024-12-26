@@ -21,7 +21,7 @@ func (t *Template) Validate() error {
     return nil
 }
 
-func (t *Template) TypeName() MessageType {
+func (t *Template) GetType() MessageType {
     return TemplateType
 }
 
