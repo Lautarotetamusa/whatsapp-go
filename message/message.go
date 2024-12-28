@@ -5,63 +5,6 @@ import (
 	"strings"
 )
 
-// The payload data types must implement this interface
-type Message interface {
-    // Check if the message its valid
-    Validate() error
-    // Return the message type name. eg: "video"
-    GetType() MessageType
-}
-
-// General Media type
-type Media struct {
-    // Only one of
-    Link    string     `json:"link,omitempty"`
-	ID      string     `json:"id,omitempty"`
-}
-
-// https://developers.facebook.com/docs/whatsapp/cloud-api/messages/text-messages
-type Text struct {
-	PreviewUrl bool   `json:"preview_url"`
-	Body       string `json:"body"`
-}
-
-type Image struct {
-    *Media
-    // Optional
-    Caption string     `json:"caption,omitempty"`
-}
-
-type Video struct {
-    *Media
-    // Optional
-    Caption string     `json:"caption,omitempty"`
-}
-
-type Document struct {
-    *Media
-    // Optional
-	Filename string     `json:"filename,omitempty"`
-	Caption  string     `json:"caption,omitempty"`
-}
-
-type Audio struct {
-    *Media
-}
-
-type Sticker struct {
-    *Media
-}
-
-func main(){
-    m := Image{
-        Caption: "",
-        Media: FromID("123"),
-    } 
-
-    fmt.Println(m)
-}
-
 func isUrl(s string) bool {
 	return strings.Contains(s, "http://") || strings.Contains(s, "https://")
 }
@@ -74,6 +17,59 @@ func NewTextMessage(msg string) *Text {
 	}
 }
 
+// Construct new contacts message
+func NewContacts(contacts ...Contact) *Contacts {
+    c := Contacts(contacts)
+	return &c
+}
+
+// Add appends new contacts to the collection
+func (c *Contacts) Add(contacts ...Contact) {
+	*c = append(*c, contacts...)
+}
+
+// c := NewContact("juan", Phone{
+//     Phone: "+5493148921"
+//     WaID: "19175559999"
+// )}
+func NewContact(name string, phones ...Phone) Contact {
+    return Contact{
+        Name: Name{
+            FormattedName: name,
+        },
+        Phones: phones,
+    }
+}
+
+func (c *Contact) AddAdress(a Address) {
+    c.Addresses = append(c.Addresses, a)
+}
+
+func (c *Contact) AddPhone(phone Phone) {
+    c.Phones = append(c.Phones, phone)
+}
+
+func (c *Contact) AddUrl(url URL) {
+    c.URLs = append(c.URLs, url)
+}
+
+func (c *Contact) AddEmail(email Email) {
+    c.Emails = append(c.Emails, email)
+}
+
+func (c *Contact) SetOrg(org Org) {
+    c.Org = &org
+}
+
+func (c *Contact) SetBirthday(birthday string) {
+    c.Birthday = birthday
+}
+
+func (c *Contact) SetName(name Name) {
+    c.Name = name
+}
+
+// If the parameter its a url set the Link otherwise set the ID
 func NewMedia(idOrLink string) *Media {
     m := Media{}
     if isUrl(idOrLink){
@@ -96,6 +92,11 @@ func FromLink(link string) *Media {
     }
 }
 
+func (c *Contacts) Validate() error {
+    // TODO
+    return nil
+}
+
 func (m *Media) Validate() error {
     if (m.Link != "") && (m.ID != "") {
         return ErrorIdAndLink
@@ -114,9 +115,12 @@ func (m *Text) Validate() error {
 }
 
 // implements the Message interface
+// Media types
 func (m *Image)     GetType() MessageType { return ImageType }
 func (m *Video)     GetType() MessageType { return VideoType }
 func (m *Audio)     GetType() MessageType { return AudioType }
 func (m *Sticker)   GetType() MessageType { return StickerType }
 func (m *Document)  GetType() MessageType { return DocumentType }
 func (m *Text)      GetType() MessageType { return TextType }
+
+func (m *Contacts)  GetType() MessageType { return ContactsType }

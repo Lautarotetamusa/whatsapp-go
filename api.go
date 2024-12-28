@@ -62,9 +62,8 @@ func (p *Payload) MarshalJSON() ([]byte, error) {
 		"recipient_type":    p.recipientType,
 		"to":                p.to,
 		"type":              typ,
+        string(typ):         p.data,
 	}
-	// Add the Data field to the map
-	dataMap[string(typ)] = p.data
 
 	return json.Marshal(dataMap)
 }
