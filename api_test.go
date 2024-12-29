@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Lautarotetamusa/whatsapp-go/message"
 	"github.com/joho/godotenv"
 )
 
@@ -32,7 +31,7 @@ func getWhatsapp() *Whatsapp {
 		panic("NUMBER_ID is required in the environment")
 	}
 
-	wa = NewWhatsapp(accessToken, numberId)
+	wa = New(accessToken, numberId)
 	return wa
 }
 
@@ -57,8 +56,8 @@ func TestSendImageWithId(t *testing.T) {
 	//TODO: this id lasts 15 days, the test will fail
 	imageId := "903533311949481"
 
-	msg := message.Image{
-		Media:   message.FromID(imageId),
+	msg := Image{
+		Media:   FromID(imageId),
 		Caption: "Test image",
 	}
 
@@ -73,8 +72,8 @@ func TestSendVideoWithId(t *testing.T) {
 	//TODO: this id lasts 15 days, the test will fail
 	videoId := "967038865474431"
 
-	msg := message.Video{
-		Media:   message.FromID(videoId),
+	msg := Video{
+		Media:   FromID(videoId),
 		Caption: "Test video",
 	}
 
@@ -89,8 +88,8 @@ func TestSendDocumentWithId(t *testing.T) {
 	//TODO: this id lasts 15 days, the test will fail
 	docId := "903533311949481"
 
-	msg := message.Document{
-		Media:    message.FromID(docId),
+	msg := Document{
+		Media:    FromID(docId),
 		Caption:  "Test document",
 		Filename: "test_file.pdf",
 	}
@@ -106,8 +105,8 @@ func TestSendAudioWithId(t *testing.T) {
 	//TODO: this id lasts 15 days, the test will fail
 	audioId := "903533311949481"
 
-	msg := message.Audio{
-		Media: message.FromID(audioId),
+	msg := Audio{
+		Media: FromID(audioId),
 	}
 
 	_, err := w.Send(to, &msg)
@@ -121,8 +120,8 @@ func TestSendStickerWithId(t *testing.T) {
 	//TODO: this id lasts 15 days, the test will fail
 	stickerId := "903533311949481"
 
-	msg := message.Sticker{
-		Media: message.FromID(stickerId),
+	msg := Sticker{
+		Media: FromID(stickerId),
 	}
 
 	_, err := w.Send(to, &msg)
@@ -133,12 +132,12 @@ func TestSendStickerWithId(t *testing.T) {
 
 func TestSendContacts(t *testing.T) {
 	w := getWhatsapp()
-	msg := message.NewContacts(
-		*message.NewContact(
-			message.NewName("jose gonzales"),
+	msg := NewContacts(
+		*NewContact(
+			NewName("jose gonzales"),
 			// One contact can have multiple phone numbers
-			message.NewPhone("+5493415854220"),
-			message.NewPhone("+5493416668989"),
+			NewPhone("+5493415854220"),
+			NewPhone("+5493416668989"),
 		),
 	)
 

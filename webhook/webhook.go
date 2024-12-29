@@ -1,6 +1,5 @@
 // https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/components/
-
-package whatsapp
+package webhook
 
 import (
 	"encoding/json"
@@ -266,7 +265,7 @@ func parseDeliveryStatus(s string) (DeliveryStatus, error) {
 	return DeliveryStatus(value), nil
 }
 
-func NewWebhook(verifyToken string) *Webhook {
+func New(verifyToken string) *Webhook {
 	if verifyToken == "" {
 		panic("verifyToken cannot be empty")
 	}

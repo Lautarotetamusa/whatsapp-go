@@ -1,4 +1,4 @@
-package message
+package whatsapp
 
 import (
 	"encoding/json"

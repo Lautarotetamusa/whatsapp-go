@@ -23,7 +23,7 @@ func main(){
     accessToken := os.Getenv("ACCESS_TOKEN")
     numberId    := os.Getenv("NUMBER_ID")
 
-    wa := whatsapp.NewWhatsapp(accessToken, numberId)
+    wa := whatsapp.New(accessToken, numberId)
     recipient := "+1234567899999" // put a valid number with country code
 
     res, err := wa.Send(recipient, &message.Text{
@@ -53,13 +53,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Lautarotetamusa/whatsapp-go"
+	"github.com/Lautarotetamusa/whatsapp-go/webhook"
 )
 
 func main(){
     verifyToken := os.Getenv("VERIFY_TOKEN")
 
-    webhook := whatsapp.NewWebhook(verifyToken)
+    webhook := webhook.New(verifyToken)
     webhook.OnStatusChange(func (s *whatsapp.Status){
         fmt.Printf("status changed: %#v\n", s)
     })

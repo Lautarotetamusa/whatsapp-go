@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/Lautarotetamusa/whatsapp-go/message"
 )
 
 const (
@@ -39,10 +37,10 @@ type Payload struct {
 	recipientType    string
 	to               string
 
-	data message.Message
+	data Message
 }
 
-func NewPayload(to string, data message.Message) *Payload {
+func NewPayload(to string, data Message) *Payload {
 	return &Payload{
 		messagingProduct: "whatsapp",
 		recipientType:    "individual",
@@ -69,7 +67,7 @@ func (p *Payload) MarshalJSON() ([]byte, error) {
 	return json.Marshal(dataMap)
 }
 
-func NewWhatsapp(accessToken, numberId string) *Whatsapp {
+func New(accessToken, numberId string) *Whatsapp {
 	if accessToken == "" || numberId == "" {
 		panic("accessToken and numberId cannot be empty")
 	}
@@ -101,9 +99,9 @@ func (w *Whatsapp) createReq(p *Payload) (*http.Request, error) {
 	return req, nil
 }
 
-func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
+func (w *Whatsapp) Send(to string, msg Message) (*Response, error) {
 	if to == "" {
-		return nil, message.NewErr(msg, errors.New("recipient phone cannot be empty"))
+		return nil, NewErr(msg, errors.New("recipient phone cannot be empty"))
 	}
 	payload := NewPayload(to, msg)
 	if err := payload.data.Validate(); err != nil {
@@ -138,5 +136,5 @@ func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
 }
 
 func (w *Whatsapp) SendText(to string, msg string) (*Response, error) {
-	return w.Send(to, message.NewTextMessage(msg))
+	return w.Send(to, NewTextMessage(msg))
 }

@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/Lautarotetamusa/whatsapp-go"
-	"github.com/Lautarotetamusa/whatsapp-go/message"
 	"github.com/joho/godotenv"
 )
 
@@ -19,25 +18,25 @@ func main(){
     numberId    := os.Getenv("NUMBER_ID")
     recipient   := os.Getenv("RECIPIENT")  // valid number with country code
 
-    wa := whatsapp.NewWhatsapp(accessToken, numberId)
+    wa := whatsapp.New(accessToken, numberId)
 
-    template := message.NewTemplate("image_template", message.SpanishARG).
+    template := whatsapp.NewTemplate("image_template", whatsapp.SpanishARG).
         AddComponent(
-            *message.NewHeaderComponent().
-            AddParameter(&message.Image{ 
-                Media: message.FromID("903533311949481"),
+            *whatsapp.NewHeaderComponent().
+            AddParameter(&whatsapp.Image{ 
+                Media: whatsapp.FromID("903533311949481"),
             }),
         )
 
     // Maybe this style its better?
-    // t := message.NewTemplate("image_template", "es_AR", 
+    // t := whatsapp.NewTemplate("image_template", "es_AR", 
     //     NewHeaderComponent(
-    //          &message.Image{ 
-    //              Media: message.FromID("903533311949481"),
+    //          &whatsapp.Image{ 
+    //              Media: whatsapp.FromID("903533311949481"),
     //          }
     //     ),
     //     NewBodyComponent(
-    //         &message.Text{}
+    //         &whatsapp.Text{}
     //     )
     // ).
 
@@ -50,7 +49,7 @@ func main(){
 
     if err != nil {
         fmt.Println(err)
-        panic("cannot send the message")
+        panic("cannot send the whatsapp")
     }
     fmt.Printf("Message sended succesfully! Response %#v\n", res)
 }

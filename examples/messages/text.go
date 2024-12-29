@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/Lautarotetamusa/whatsapp-go"
-	"github.com/Lautarotetamusa/whatsapp-go/message"
 	"github.com/joho/godotenv"
 )
 
@@ -17,10 +16,10 @@ func main(){
     accessToken := os.Getenv("ACCESS_TOKEN")
     numberId    := os.Getenv("NUMBER_ID")
 
-    wa := whatsapp.NewWhatsapp(accessToken, numberId)
+    wa := whatsapp.New(accessToken, numberId)
     recipient := "+54 341 15-585-4220" // put a valid number with country code
 
-    res, err := wa.Send(recipient, &message.Text{
+    res, err := wa.Send(recipient, &whatsapp.Text{
         Body: "hola!",
     })
 

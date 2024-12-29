@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Lautarotetamusa/whatsapp-go"
+	"github.com/Lautarotetamusa/whatsapp-go/webhook"
 	"github.com/joho/godotenv"
 )
 
@@ -16,15 +16,17 @@ func main(){
 
     verifyToken := os.Getenv("VERIFY_TOKEN")
 
-    webhook := whatsapp.NewWebhook(verifyToken)
-    webhook.OnStatusChange(func (s *whatsapp.Status){
+    wh := webhook.New(verifyToken)
+
+    wh.OnStatusChange(func (s *webhook.Status){
         fmt.Printf("status changed: %#v\n", s)
     })
-    webhook.OnNewMessage(func (m *whatsapp.Message) {
+
+    wh.OnNewMessage(func (m *webhook.Message) {
         fmt.Printf("new message recived: %#v\n", m)
     })
 
     fmt.Println("Server running")
 
-    http.ListenAndServe(":3000", webhook)
+    http.ListenAndServe(":3000", wh)
 }

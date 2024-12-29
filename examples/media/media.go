@@ -5,12 +5,11 @@ import (
 	"fmt"
 
 	"github.com/Lautarotetamusa/whatsapp-go"
-	"github.com/Lautarotetamusa/whatsapp-go/message"
 )
 
 func main(){
-    m := &message.Video{
-        Media: message.FromID("123"),
+    m := &whatsapp.Video{
+        Media: whatsapp.FromID("123"),
     }
     // valid phone number
     to := "12345678900"

@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/Lautarotetamusa/whatsapp-go"
-	"github.com/Lautarotetamusa/whatsapp-go/message"
 	"github.com/joho/godotenv"
 )
 
@@ -19,9 +18,9 @@ func main(){
     numberId    := os.Getenv("NUMBER_ID")
     recipient   := os.Getenv("RECIPIENT")  // valid number with country code
 
-    wa := whatsapp.NewWhatsapp(accessToken, numberId)
+    wa := whatsapp.New(accessToken, numberId)
     
-    msg := message.NewContacts()
+    msg := whatsapp.NewContacts()
 
     _, err := wa.Send(recipient, msg)
     if err != nil {
@@ -38,25 +37,25 @@ func a(){
     numberId    := os.Getenv("NUMBER_ID")
     recipient   := os.Getenv("RECIPIENT")  // valid number with country code
 
-    wa := whatsapp.NewWhatsapp(accessToken, numberId)
+    wa := whatsapp.New(accessToken, numberId)
 
-    msg := message.NewContacts(
-        *message.NewContact(
-            message.NewName("jose gonzales"), 
+    msg := whatsapp.NewContacts(
+        *whatsapp.NewContact(
+            whatsapp.NewName("jose gonzales"), 
             // One contact can have multiple phone numbers
-            message.NewPhone("+5493415854220"),
-            message.NewPhone("+5493416668989"),
+            whatsapp.NewPhone("+5493415854220"),
+            whatsapp.NewPhone("+5493416668989"),
         ),
-        *message.NewContact(
+        *whatsapp.NewContact(
             // Specify first, middle, formmated name and other Name fields 
-            message.Name{
+            whatsapp.Name{
                 FormattedName: "pedro J. alberto",
                 FirstName: "Pedro",
                 LastName: "Alberto",
                 MiddleName: "Jose",
             },
             // Phone with WaID have the Open Chat button
-            message.Phone{
+            whatsapp.Phone{
                 Phone: "+5493418981233",
                 WaID: "12345",
             },
@@ -72,7 +71,7 @@ func a(){
 
     if err != nil {
         fmt.Println(err)
-        panic("cannot send the message")
+        panic("cannot send the whatsapp")
     }
     fmt.Printf("Message sended succesfully! Response %#v\n", res)
 }

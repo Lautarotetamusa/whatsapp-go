@@ -1,4 +1,4 @@
-package message
+package whatsapp
 
 // The payload data types must implement this interface
 type Message interface {
