@@ -2,41 +2,86 @@ package message
 
 import "testing"
 
-func TestImageCantHaveIdAndLink(t *testing.T) {
-    msg := Image{
-        Media: &Media{
-            ID: "12345",
-            Link: "https://hola.com",
-        },
+func TestMediaCantHaveIdAndLink(t *testing.T) {
+    msg := &Media{
+        ID: "12345",
+        Link: "https://hola.com",
     }
 
     if err := msg.Validate(); err == nil {
-        t.Fatalf("image with id and link must be an error")
+        if _, ok := err.(ValidationError); !ok {
+            t.Fatalf("media with id and link must be a ValidationError")
+        }
     }
 }
 
-func TestVideoCantHaveIdAndLink(t *testing.T) {
-    msg := Video{
-        Media: &Media{
-            ID: "12345",
-            Link: "https://hola.com",
-        },
+func TestTextCantHaveEmptyBody(t *testing.T) {
+    msg := &Text{
+        Body: "",
     }
 
     if err := msg.Validate(); err == nil {
-        t.Fatalf("video with id and link must be an error")
+        if _, ok := err.(ValidationError); !ok {
+            t.Fatalf("text with empty body must be a ValidationError")
+        }
     }
 }
 
-func TestDocumentCantHaveIdAndLink(t *testing.T) {
-    msg := Document{
-        Media: &Media{
-            ID: "12345",
-            Link: "https://hola.com",
-        },
+func TestNewMessageWithUrl(t *testing.T) {
+    msg := NewTextMessage("http://httpbin.org/")
+
+    if !msg.PreviewUrl  {
+        t.Fatalf("new text message must have a preview url")
+    }
+}
+
+func TestNewName(t *testing.T) {
+    msg := NewName("juan pablo")
+
+    if err := msg.Validate(); err != nil {
+        t.Fatalf("NewName doesnt construct a valid Name")
+    }
+}
+
+func TestNameWithNoFirstName(t *testing.T) {
+    msg := Name{
+        FormattedName: "juan",
     }
 
     if err := msg.Validate(); err == nil {
-        t.Fatalf("document with id and link must be an error")
+        if _, ok := err.(ValidationError); !ok {
+            t.Fatalf("name with only formatted_name must be a ValidationError")
+        }
+    }
+}
+
+func TestAtLeastOneContact(t *testing.T) {
+    msg := NewContacts()
+
+    if err := msg.Validate(); err == nil {
+        if _, ok := err.(ValidationError); !ok {
+            t.Fatalf("contacts with no contact must be a ValidationError")
+        }
+    }
+}
+
+func TestContactMustHaveAtLeastOnePhone(t *testing.T) {
+    msg := NewContact(NewName("juan pablo"))
+
+    if err := msg.Validate(); err == nil {
+        if _, ok := err.(ValidationError); !ok {
+            t.Fatalf("contact with no phone must be a ValidationError")
+        }
+    }
+}
+
+func TestContactMustHaveName(t *testing.T) {
+    msg := Contact{}
+    msg.Phones = []Phone{NewPhone("12345")}
+
+    if err := msg.Validate(); err == nil {
+        if _, ok := err.(ValidationError); !ok {
+            t.Fatalf("contact with no name must be a ValidationError")
+        }
     }
 }

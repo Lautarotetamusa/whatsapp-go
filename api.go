@@ -3,6 +3,7 @@ package whatsapp
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -62,7 +63,7 @@ func (p *Payload) MarshalJSON() ([]byte, error) {
 		"recipient_type":    p.recipientType,
 		"to":                p.to,
 		"type":              typ,
-        string(typ):         p.data,
+		string(typ):         p.data,
 	}
 
 	return json.Marshal(dataMap)
@@ -82,16 +83,8 @@ func NewWhatsapp(accessToken, numberId string) *Whatsapp {
 	}
 }
 
-func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
-	if to == "" {
-		return nil, fmt.Errorf("recipient phone cannot be empty")
-	}
-	payload := NewPayload(to, msg)
-	if err := payload.data.Validate(); err != nil {
-		return nil, err
-	}
-
-	jsonBody, err := json.Marshal(payload)
+func (w *Whatsapp) createReq(p *Payload) (*http.Request, error) {
+	jsonBody, err := json.Marshal(p)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +98,22 @@ func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", w.accessToken))
+	return req, nil
+}
+
+func (w *Whatsapp) Send(to string, msg message.Message) (*Response, error) {
+	if to == "" {
+		return nil, message.NewErr(msg, errors.New("recipient phone cannot be empty"))
+	}
+	payload := NewPayload(to, msg)
+	if err := payload.data.Validate(); err != nil {
+		return nil, err
+	}
+
+	req, err := w.createReq(payload)
+	if err != nil {
+		return nil, err
+	}
 
 	res, err := w.client.Do(req)
 	if err != nil {

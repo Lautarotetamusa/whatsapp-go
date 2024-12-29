@@ -1,7 +1,7 @@
 package message
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 )
 
@@ -24,49 +24,79 @@ func NewContacts(contacts ...Contact) *Contacts {
 }
 
 // Add appends new contacts to the collection
-func (c *Contacts) Add(contacts ...Contact) {
+func (c *Contacts) Add(contacts ...Contact) *Contacts {
 	*c = append(*c, contacts...)
+    return c
 }
 
-// c := NewContact("juan", Phone{
-//     Phone: "+5493148921"
-//     WaID: "19175559999"
-// )}
-func NewContact(name string, phones ...Phone) Contact {
-    return Contact{
-        Name: Name{
-            FormattedName: name,
-        },
+// name := NewName("juan carlos")
+// Get the full name and returns a Name object
+// The FullName must have at least ONE space "firstName lastName"
+func NewName(fullName string) Name {
+    var name Name
+    splitted := strings.Split(fullName, " ")
+
+    if len(splitted) > 1 {
+        name.FormattedName = fullName
+        name.FirstName = splitted[0]
+        name.LastName = splitted[1]
+    }
+    return name
+}
+
+func NewPhone(phone string) Phone {
+    return Phone{
+        Phone: phone,
+    }
+}
+
+func NewPhoneWithWaID(phone, waid string) Phone {
+    return Phone{
+        Phone: phone,
+        WaID: waid,
+    }
+}
+
+func NewContact(name Name, phones ...Phone) *Contact {
+    return &Contact{
+        Name: name,
         Phones: phones,
     }
 }
 
-func (c *Contact) AddAdress(a Address) {
+func (c *Contact) AddAdress(a Address) *Contact {
     c.Addresses = append(c.Addresses, a)
+    return c
 }
 
-func (c *Contact) AddPhone(phone Phone) {
+func (c *Contact) AddPhone(phone Phone) *Contact {
     c.Phones = append(c.Phones, phone)
+    return c
 }
 
-func (c *Contact) AddUrl(url URL) {
+func (c *Contact) AddUrl(url URL) *Contact {
     c.URLs = append(c.URLs, url)
+    return c
 }
 
-func (c *Contact) AddEmail(email Email) {
+func (c *Contact) AddEmail(email Email) *Contact {
     c.Emails = append(c.Emails, email)
+    return c
 }
 
-func (c *Contact) SetOrg(org Org) {
+func (c *Contact) SetOrg(org Org) *Contact {
     c.Org = &org
+    return c
 }
 
-func (c *Contact) SetBirthday(birthday string) {
+func (c *Contact) SetBirthday(birthday string) *Contact {
     c.Birthday = birthday
+    return c
 }
 
-func (c *Contact) SetName(name Name) {
+func (c *Contact) SetName(name Name) *Contact {
     c.Name = name
+    return c
 }
 
 // If the parameter its a url set the Link otherwise set the ID
@@ -92,8 +122,29 @@ func FromLink(link string) *Media {
     }
 }
 
+func (n *Name) Validate() error {
+    if n.FirstName == "" || n.LastName == "" || n.FormattedName == "" {
+        return NewErr(&Contacts{}, errors.New("first_name, last_name and formmatted_name are required"))
+    }
+    return nil
+}
+
+func (c *Contact) Validate() error {
+    if len(c.Phones) == 0 {
+        return NewErr(&Contacts{}, errors.New("contact must have at least one phone"))
+    }
+    return c.Name.Validate()
+}
+
 func (c *Contacts) Validate() error {
-    // TODO
+    if len(*c) == 0 {
+        return NewErr(c, errors.New("you need to send at least one contact"))
+    }
+    for _, contact := range *c {
+        if err := contact.Validate(); err != nil {
+            return err
+        }
+    }
     return nil
 }
 
@@ -109,7 +160,7 @@ func (m *Media) Validate() error {
 
 func (m *Text) Validate() error { 
     if m.Body == "" {
-        return fmt.Errorf("text body cannot be empty")
+        return NewErr(m, errors.New("body cannot be empty"))
     }
     return nil
 }

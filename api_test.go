@@ -130,3 +130,20 @@ func TestSendStickerWithId(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestSendContacts(t *testing.T) {
+	w := getWhatsapp()
+	msg := message.NewContacts(
+		*message.NewContact(
+			message.NewName("jose gonzales"),
+			// One contact can have multiple phone numbers
+			message.NewPhone("+5493415854220"),
+			message.NewPhone("+5493416668989"),
+		),
+	)
+
+	_, err := w.Send(to, msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
