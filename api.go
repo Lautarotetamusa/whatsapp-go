@@ -50,8 +50,8 @@ func NewPayload(to string, data Message) *Payload {
 
 // For debugging purposes
 func (p *Payload) String() string {
-    t, _ := json.MarshalIndent(p, "", "   ")
-    return fmt.Sprintf("%s\n", string(t))
+	t, _ := json.MarshalIndent(p, "", "   ")
+	return fmt.Sprintf("%s\n", string(t))
 }
 
 func (p *Payload) Validate() error {
@@ -61,7 +61,7 @@ func (p *Payload) Validate() error {
 	if p.to == "" {
 		return NewErr(p.data, ErrNoRecipient)
 	}
-    return p.data.Validate()
+	return p.data.Validate()
 }
 
 func (p *Payload) MarshalJSON() ([]byte, error) {
@@ -126,8 +126,8 @@ func (w *Whatsapp) Send(to string, msg Message) (*Response, error) {
 }
 
 func (w *Whatsapp) createReq(p *Payload) (*http.Request, error) {
-    var buf bytes.Buffer
-	   err := json.NewEncoder(&buf).Encode(p)
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(p)
 	if err != nil {
 		return nil, err
 	}

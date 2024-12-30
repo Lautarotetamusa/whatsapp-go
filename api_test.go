@@ -163,16 +163,16 @@ func TestSendContacts(t *testing.T) {
 // }
 
 func TestSendButtons(t *testing.T) {
-    w := getWhatsapp()
+	w := getWhatsapp()
 
-    msg := NewInteractive(NewButtons(
-        NewButton("btn_1", "123"),
-        NewButton("btn_2", "124"),
-    )).
-    SetBody("hola!").
-    SetHeader(&Image{
-        Media: FromID("903533311949481"),
-    })
+	msg := NewInteractive(NewButtons(
+		NewButton("btn_1", "123"),
+		NewButton("btn_2", "124"),
+	)).
+		SetBody("hola!").
+		SetHeader(&Image{
+			Media: FromID("903533311949481"),
+		})
 
 	_, err := w.Send(to, msg)
 	if err != nil {

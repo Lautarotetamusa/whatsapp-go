@@ -13,8 +13,8 @@ type ResponseError struct {
 }
 
 type ValidationError struct {
-    msg Message
-    err error
+	msg Message
+	err error
 }
 
 func (e *ResponseError) Error() string {
@@ -22,18 +22,18 @@ func (e *ResponseError) Error() string {
 }
 
 func NewErr(m Message, e error) *ValidationError {
-    return &ValidationError{
-        msg: m,
-        err: e,
-    }
+	return &ValidationError{
+		msg: m,
+		err: e,
+	}
 }
 
 func (e ValidationError) Error() string {
-    return fmt.Sprintf("type: %s err: %s", e.msg.GetType(), e.err.Error())
+	return fmt.Sprintf("type: %s err: %s", e.msg.GetType(), e.err.Error())
 }
 
 var (
-    ErrorIdAndLink = errors.New("either Link or ID must be present in media message")
-    ErrEmptyPayload = errors.New("payload data its empty") 
-    ErrNoRecipient = errors.New("recipient phone cannot be empty")
+	ErrorIdAndLink  = errors.New("either Link or ID must be present in media message")
+	ErrEmptyPayload = errors.New("payload data its empty")
+	ErrNoRecipient  = errors.New("recipient phone cannot be empty")
 )
