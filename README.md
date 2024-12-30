@@ -1,13 +1,36 @@
 [![Go](https://github.com/Lautarotetamusa/whatsapp-go/actions/workflows/go.yml/badge.svg)](https://github.com/Lautarotetamusa/whatsapp-go/actions/workflows/go.yml)
 # whatsapp cloud api
 
-Simple wraper for the meta cloud api
+Simple and easy to use wraper for the meta cloud api \
+Easy way for creating bots and sending and reciving messages using the *Whatsapp Cloud API* \
 
-# Usage
-## Instalation
+# Supported API
+- [ ] Message
+    - [x] Text
+    - [x] Media
+        - [x] Video
+        - [x] Image
+        - [x] Audio
+        - [x] Sticker
+        - [x] Document
+    - [ ] Interactive
+        - [x] Buttons
+        - [ ] Call To Action
+        - [ ] Catalog
+        - [ ] List
+        - [ ] Product
+        - [ ] Product List
+        - [ ] Flow
+    - [ ] Template
+- [x] Webhooks
+    - [x] Reciving messages
+- [ ] Media management
+
+# Instalation
 `go get github.com/Lautarotetamusa/whatsapp-go`
 
-## Send message
+# Message
+## Simple text message
 ```go
 package main
 
@@ -36,15 +59,65 @@ func main(){
 }
 ```
 
-### Sending a image
+## Send Media
 ```go
-res, err := wa.Send("recipient-phone", &message.Image{
-    ID: "valid-image-id",
+res, err := wa.Send("recipient-phone", &whatsapp.Image{
+    Media: whatsapp.FromID("valid-image-id"),
     Caption: "Test image",
 })
 ```
+or with a link
+```go
+res, err := wa.Send("recipient-phone", &whatsapp.Video{
+    Media: whatsapp.FromLink("https://url.com/image"),
+})
+```
 
-## Webhook
+## Send Contacts
+```go
+msg := whatsapp.NewContacts(
+    *whatsapp.NewContact(
+        // NewName expects string with at least one space
+        // "FirstName LastName"
+        whatsapp.NewName("jose gonzales"), 
+        // One contact can have multiple phone numbers
+        whatsapp.NewPhone("+5493415854220"),
+        whatsapp.NewPhone("+5493416668989"),
+    ),
+    *whatsapp.NewContact(
+        // Specify first, middle, formmated name and other Name fields 
+        whatsapp.Name{
+            FormattedName: "pedro J. alberto",
+            FirstName: "Pedro",
+            LastName: "Alberto",
+            MiddleName: "Jose",
+        },
+        // Phone with WaID will have the Open Chat button
+        whatsapp.Phone{
+            Phone: "+5493418981233",
+            WaID: "12345",
+        },
+    ),
+)
+res, err := wa.Send(to, msg)
+```
+
+## Send Interactive 
+### Buttons
+```go
+msg := NewInteractive(NewButtons(
+    NewButton("btn_1", "123"), // btn_name, btn_id
+    NewButton("btn_2", "124"),
+)).
+SetBody("hi!").
+SetHeader(&Image{
+    Media: FromID("valid-image-id"),
+})
+
+res, err := wa.Send(to, msg)
+```
+
+# Webhook
 ```go
 package main
 
@@ -74,5 +147,5 @@ func main(){
 ```
 
 # Documentation
-[Webhooks](https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/components/)
-[Messages](https://developers.facebook.com/docs/whatsapp/cloud-api/messages/)
+[Webhooks](https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/components/) \
+[Messages](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages)

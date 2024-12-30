@@ -105,7 +105,9 @@ func (buttons Buttons) Validate() error {
 
 	idMap := make(map[string]bool, 3)
 	for _, btn := range buttons {
-		btn.Validate()
+        if err := btn.Validate(); err != nil {
+            return err
+        }
 
 		if idMap[btn.Reply.ID] {
 			return NewErr(&Interactive{}, errors.New("two buttons cannot have the same ID in one message"))
