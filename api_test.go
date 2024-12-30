@@ -146,3 +146,36 @@ func TestSendContacts(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// func TestSendInteractiveCTA(t *testing.T) {
+//     w := getWhatsapp()
+//
+//     msg := NewCallToAction("hola!", "See Dates", "https://www.luckyshrub.com").
+//         SetHeader(&Image{
+//             Media: NewMedia("903533311949481"),
+//         }).
+//         SetFooter("lautarotetamusa")
+//
+// 	_, err := w.Send(to, msg)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// }
+
+func TestSendButtons(t *testing.T) {
+    w := getWhatsapp()
+
+    msg := NewInteractive(NewButtons(
+        NewButton("btn_1", "123"),
+        NewButton("btn_2", "124"),
+    )).
+    SetBody("hola!").
+    SetHeader(&Image{
+        Media: FromID("903533311949481"),
+    })
+
+	_, err := w.Send(to, msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

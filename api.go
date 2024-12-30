@@ -3,7 +3,6 @@ package whatsapp
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -49,10 +48,23 @@ func NewPayload(to string, data Message) *Payload {
 	}
 }
 
-func (p *Payload) MarshalJSON() ([]byte, error) {
+// For debugging purposes
+func (p *Payload) String() string {
+    t, _ := json.MarshalIndent(p, "", "   ")
+    return fmt.Sprintf("%s\n", string(t))
+}
+
+func (p *Payload) Validate() error {
 	if p.data == nil {
-		return nil, fmt.Errorf("payload data its empty")
+		return NewErr(p.data, ErrEmptyPayload)
 	}
+	if p.to == "" {
+		return NewErr(p.data, ErrNoRecipient)
+	}
+    return p.data.Validate()
+}
+
+func (p *Payload) MarshalJSON() ([]byte, error) {
 	typ := p.data.GetType()
 
 	// Create a map to hold the payload data
@@ -81,33 +93,11 @@ func New(accessToken, numberId string) *Whatsapp {
 	}
 }
 
-func (w *Whatsapp) createReq(p *Payload) (*http.Request, error) {
-	jsonBody, err := json.Marshal(p)
-	if err != nil {
-		return nil, err
-	}
-
-	bodyReader := bytes.NewReader(jsonBody)
-	req, err := http.NewRequest(http.MethodPost, w.url, bodyReader)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", w.accessToken))
-	return req, nil
-}
-
 func (w *Whatsapp) Send(to string, msg Message) (*Response, error) {
-	if to == "" {
-		return nil, NewErr(msg, errors.New("recipient phone cannot be empty"))
-	}
 	payload := NewPayload(to, msg)
-	if err := payload.data.Validate(); err != nil {
+	if err := payload.Validate(); err != nil {
 		return nil, err
 	}
-
 	req, err := w.createReq(payload)
 	if err != nil {
 		return nil, err
@@ -133,6 +123,24 @@ func (w *Whatsapp) Send(to string, msg Message) (*Response, error) {
 	}
 
 	return &data, nil
+}
+
+func (w *Whatsapp) createReq(p *Payload) (*http.Request, error) {
+    var buf bytes.Buffer
+	   err := json.NewEncoder(&buf).Encode(p)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, w.url, &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", w.accessToken))
+	return req, nil
 }
 
 func (w *Whatsapp) SendText(to string, msg string) (*Response, error) {

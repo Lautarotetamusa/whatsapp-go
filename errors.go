@@ -34,5 +34,6 @@ func (e ValidationError) Error() string {
 
 var (
     ErrorIdAndLink = errors.New("either Link or ID must be present in media message")
+    ErrEmptyPayload = errors.New("payload data its empty") 
+    ErrNoRecipient = errors.New("recipient phone cannot be empty")
 )
-

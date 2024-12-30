@@ -5,10 +5,6 @@ import (
 	"strings"
 )
 
-func isUrl(s string) bool {
-	return strings.Contains(s, "http://") || strings.Contains(s, "https://")
-}
-
 func NewTextMessage(msg string) *Text {
 	return &Text{
         // if the message its an url make the message shows the preview
@@ -163,6 +159,10 @@ func (m *Text) Validate() error {
         return NewErr(m, errors.New("body cannot be empty"))
     }
     return nil
+}
+
+func isUrl(s string) bool {
+	return strings.Contains(s, "http://") || strings.Contains(s, "https://")
 }
 
 // implements the Message interface

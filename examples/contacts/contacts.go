@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -63,9 +62,7 @@ func a(){
     )
 
     payload := whatsapp.NewPayload(recipient, msg)
-    t, err := json.MarshalIndent(payload, "", "   ")
-    fmt.Println(err)
-    fmt.Printf("%s\n", string(t))
+    fmt.Println(payload)
 
     res, err := wa.Send(recipient, msg)
 

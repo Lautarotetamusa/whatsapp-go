@@ -17,13 +17,17 @@ func main(){
     numberId    := os.Getenv("NUMBER_ID")
     to          := os.Getenv("RECIPIENT")  // valid number with country code
 
-    wa := whatsapp.New(accessToken, numberId)
-    msg := &whatsapp.Image{
-        Media: whatsapp.NewMedia("903533311949481"),
-    }
+    msg := whatsapp.NewCallToAction("hola!", "See Dates", "https://www.luckyshrub.com").
+        SetHeader(&whatsapp.Image{
+            Media: whatsapp.NewMedia("903533311949481"),
+        }).
+        SetFooter("lautarotetamusa")
 
-    payload := whatsapp.NewPayload(to, msg)
-    fmt.Println(payload)
+    wa := whatsapp.New(accessToken, numberId)
+
+    // payload := whatsapp.NewPayload(to, msg)
+    // fmt.Println(payload)
+
     res, err := wa.Send(to, msg)
     if err != nil {
         panic(err)

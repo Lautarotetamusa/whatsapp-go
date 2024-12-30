@@ -10,6 +10,26 @@ const (
     DocumentType    MessageType = "document"
     TemplateType    MessageType = "template"
     ContactsType    MessageType = "contacts"
+    InteractiveType MessageType = "interactive"
+)
+
+// button: se usa para los botones de respuesta.
+// catalog_message: se usa para los mensajes de catálogo.
+// list: se usa para los mensajes de lista.
+// product: se usa para los mensajes sobre un solo producto.
+// product_list: se usa para los mensajes sobre varios productos.
+// flow: se usa para los mensajes de Flows.
+type InteractionType string
+const (
+    //TODO: cta_url its not present in the references but in the Examples
+    CallToActionType InteractionType = "cta_url"
+    ButtonType      InteractionType = "button"
+    ButtonsType     InteractionType = "buttons"
+    CatalogType     InteractionType = "catalog_message"
+    List            InteractionType = "list"
+    Product         InteractionType = "product"
+    Product_list    InteractionType = "product_list"
+    Flow            InteractionType = "flow"
 )
 
 // "header" or "body"
@@ -21,7 +41,6 @@ const (
 
 // https://developers.facebook.com/docs/whatsapp/api/messages/message-templates#idiomas-admitidos
 type LanguageCode string
-
 const (
 	English LanguageCode = "en"
 	EnglishUS LanguageCode = "en_US"
