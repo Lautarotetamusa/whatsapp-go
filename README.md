@@ -55,7 +55,7 @@ func main(){
     if err != nil {
         panic("cannot send the message")
     }
-    fmt.Printf("Message sended succesfully! Response %#v\n", res)
+    fmt.Printf("Message sended successfully! Response %#v\n", res)
 }
 ```
 
@@ -132,17 +132,17 @@ import (
 func main(){
     verifyToken := os.Getenv("VERIFY_TOKEN")
 
-    webhook := webhook.New(verifyToken)
-    webhook.OnStatusChange(func (s *whatsapp.Status){
+    wh := webhook.New(verifyToken)
+    wh.OnStatusChange(func (s *whatsapp.Status){
         fmt.Printf("status changed: %#v\n", s)
     })
-    webhook.OnNewMessage(func (m *whatsapp.Message) {
-        fmt.Printf("new message recived: %#v\n", m)
+
+    wh.OnNewMessage(func (m *webhook.Message) {
+        fmt.Printf("new message received: %#v\n", m)
     })
 
     fmt.Println("Server running")
-
-    http.ListenAndServe(":3000", webhook)
+    http.ListenAndServe(":3000", wh)
 }
 ```
 

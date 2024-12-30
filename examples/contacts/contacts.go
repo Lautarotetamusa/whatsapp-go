@@ -70,5 +70,5 @@ func a(){
         fmt.Println(err)
         panic("cannot send the whatsapp")
     }
-    fmt.Printf("Message sended succesfully! Response %#v\n", res)
+    fmt.Printf("Message sended successfully! Response %#v\n", res)
 }

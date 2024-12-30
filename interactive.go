@@ -38,13 +38,13 @@ type Header struct {
 
 // Optional for ProductType, required for the other types
 type Body struct {
-	// Max lenght: 1024 chars
+	// Max length: 1024 chars
 	// Emojis and markdown allowed
 	Text string `json:"text"`
 }
 
 type Footer struct {
-	// Max lenght: 60 chars
+	// Max length: 60 chars
 	// Emojis and markdown allowed
 	Text string `json:"text"`
 }
@@ -105,9 +105,9 @@ func (buttons Buttons) Validate() error {
 
 	idMap := make(map[string]bool, 3)
 	for _, btn := range buttons {
-        if err := btn.Validate(); err != nil {
-            return err
-        }
+		if err := btn.Validate(); err != nil {
+			return err
+		}
 
 		if idMap[btn.Reply.ID] {
 			return NewErr(&Interactive{}, errors.New("two buttons cannot have the same ID in one message"))

@@ -23,7 +23,7 @@ func main(){
     })
 
     wh.OnNewMessage(func (m *webhook.Message) {
-        fmt.Printf("new message recived: %#v\n", m)
+        fmt.Printf("new message received: %#v\n", m)
     })
 
     fmt.Println("Server running")

@@ -32,5 +32,5 @@ func main(){
     if err != nil {
         panic(err)
     }
-    fmt.Printf("Message sended succesfully! Response %#v\n", res)
+    fmt.Printf("Message sended successfully! Response %#v\n", res)
 }

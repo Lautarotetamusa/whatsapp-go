@@ -27,5 +27,5 @@ func main(){
         fmt.Printf("%#v\n", err)
         panic("cannot send the message")
     }
-    fmt.Printf("Message sended succesfully! Response %#v\n", res)
+    fmt.Printf("Message sended successfully! Response %#v\n", res)
 }

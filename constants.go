@@ -14,12 +14,6 @@ const (
 	InteractiveType MessageType = "interactive"
 )
 
-// button: se usa para los botones de respuesta.
-// catalog_message: se usa para los mensajes de catálogo.
-// list: se usa para los mensajes de lista.
-// product: se usa para los mensajes sobre un solo producto.
-// product_list: se usa para los mensajes sobre varios productos.
-// flow: se usa para los mensajes de Flows.
 type InteractionType string
 
 const (
