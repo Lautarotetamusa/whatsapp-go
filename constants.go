@@ -26,18 +26,6 @@ const (
 	FlowType         InteractionType = "flow"
 )
 
-// https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages#interactive-obj
-// Action object requires specefic fields.
-// requiredFields gives the name of the field required by an
-// Specific InteractionType
-type ActionRequiredField string
-const (
-    ButtonsField    ActionRequiredField = "buttons"
-    SectionsField   ActionRequiredField = "sections"
-    CTAField        ActionRequiredField = "cta_url"
-    ParametersField ActionRequiredField = "parameters"
-)
-
 // "header" or "body"
 type ComponentType string
 

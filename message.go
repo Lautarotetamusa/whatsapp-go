@@ -120,14 +120,14 @@ func FromLink(link string) *Media {
 
 func (n *Name) Validate() error {
 	if n.FirstName == "" || n.LastName == "" || n.FormattedName == "" {
-		return NewErr(&Contacts{}, errors.New("first_name, last_name and formmatted_name are required"))
+		return NewErr(n, errors.New("first_name, last_name and formmatted_name are required"))
 	}
 	return nil
 }
 
-func (c *Contact) Validate() error {
+func (c Contact) Validate() error {
 	if len(c.Phones) == 0 {
-		return NewErr(&Contacts{}, errors.New("contact must have at least one phone"))
+		return NewErr(c, errors.New("contact must have at least one phone"))
 	}
 	return c.Name.Validate()
 }
@@ -136,20 +136,15 @@ func (c *Contacts) Validate() error {
 	if len(*c) == 0 {
 		return NewErr(c, errors.New("you need to send at least one contact"))
 	}
-	for _, contact := range *c {
-		if err := contact.Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
+    return validateAll(*c)
 }
 
 func (m *Media) Validate() error {
 	if (m.Link != "") && (m.ID != "") {
-		return ErrorIdAndLink
+		return NewErr(m, ErrorIdAndLink)
 	}
 	if (m.Link == "") && (m.ID == "") {
-		return ErrorIdAndLink
+		return NewErr(m, ErrorIdAndLink)
 	}
 	return nil
 }

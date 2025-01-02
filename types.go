@@ -1,9 +1,12 @@
 package whatsapp
 
+type Validable interface {
+	Validate() error
+}
+
 // The payload data types must implement this interface
 type Message interface {
-	// Check if the message its valid
-	Validate() error
+    Validable
 	// Return the message type name. eg: "video"
 	GetType() MessageType
 }

@@ -8,35 +8,26 @@ import (
 )
 
 func TestMediaCantHaveIdAndLink(t *testing.T) {
-	msg := &Media{
-		ID:   "12345",
-		Link: "https://hola.com",
+	msg := &Image{
+        Media: &Media{
+            ID:   "12345",
+            Link: "https://hola.com",
+        },
 	}
 
-	if err := msg.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Fatalf("media with id and link must be a ValidationError")
-		}
-	}
+    expectValidationErr(t, msg, ErrorIdAndLink.Error())
 }
 
-func TestTextCantHaveEmptyBody(t *testing.T) {
+func TestText(t *testing.T) {
 	msg := &Text{
 		Body: "",
 	}
+    expectValidationErr(t, msg, "body cannot be empty")
 
-	if err := msg.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Fatalf("text with empty body must be a ValidationError")
-		}
-	}
-}
-
-func TestNewMessageWithUrl(t *testing.T) {
-	msg := NewTextMessage("http://httpbin.org/")
+	msg = NewTextMessage("http://httpbin.org/")
 
 	if !msg.PreviewUrl {
-		t.Fatalf("new text message must have a preview url")
+		t.Errorf("new text message must have a preview url")
 	}
 }
 
@@ -44,159 +35,86 @@ func TestNewName(t *testing.T) {
 	msg := NewName("juan pablo")
 
 	if err := msg.Validate(); err != nil {
-		t.Fatalf("NewName doesnt construct a valid Name")
+		t.Errorf("NewName doesnt construct a valid Name")
 	}
 }
 
-func TestNameWithNoFirstName(t *testing.T) {
-	msg := Name{
+func TestContactName(t *testing.T) {
+	name := Name{
 		FormattedName: "juan",
 	}
+	msg := NewContacts(*NewContact(name, Phone{}))
 
-	if err := msg.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Fatalf("name with only formatted_name must be a ValidationError")
-		}
-	}
+    expectValidationErr(t, msg, "first_name, last_name and formmatted_name are required")
 }
 
-func TestAtLeastOneContact(t *testing.T) {
+func TestContacts(t *testing.T) {
 	msg := NewContacts()
+    expectValidationErr(t, msg, "you need to send at least one contact")
 
-	if err := msg.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Fatalf("contacts with no contact must be a ValidationError")
-		}
-	}
-}
-
-func TestContactMustHaveAtLeastOnePhone(t *testing.T) {
-	msg := NewContact(NewName("juan pablo"))
-
-	if err := msg.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Fatalf("contact with no phone must be a ValidationError")
-		}
-	}
+	msg = NewContacts(*NewContact(NewName("juan pablo")))
+    expectValidationErr(t, msg, "contact must have at least one phone")
 }
 
 func TestContactMustHaveName(t *testing.T) {
-	msg := Contact{}
-	msg.Phones = []Phone{NewPhone("12345")}
-
-	if err := msg.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Fatalf("contact with no name must be a ValidationError")
-		}
-	}
+	contact := Contact{}
+	contact.Phones = []Phone{NewPhone("12345")}
+    msg := NewContacts(contact)
+    
+    expectValidationErr(t, msg, "first_name, last_name and formmatted_name are required")
 }
 
 func TestButtons(t *testing.T) {
-	btn := NewButtons(
+	msg := NewInteractive(NewButtons(
 		NewButton("btn_1", "111"),
 		NewButton("btn_2", "112"),
 		NewButton("btn_3", "113"),
 		NewButton("btn_4", "114"),
-	)
+	)).SetBody("body")
 
-	if err := btn.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Error("buttons interactive action can have max of 3 buttons")
-		}
-	}
+    expectValidationErr(t, msg, "interaction cannot have more than 3 buttons")
 
-	btn = NewButtons(
+	msg = NewInteractive(NewButtons(
 		NewButton("btn_1", "111"),
 		NewButton("btn_2", "111"),
-	)
+	)).SetBody("body")
 
-	if err := btn.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Error("two buttons with the same id must be an error")
-		}
-	}
+    expectValidationErr(t, msg, "two buttons cannot have the same id in one message")
 }
 
 func TestButtonID(t *testing.T) {
-	id := strings.Repeat("A", 256)
-	btn := NewButton("12345678901234567890", id)
-	if err := btn.Validate(); err != nil {
-		t.Error("button id can have 256 characters")
-	}
+	btn := NewButton("title", "")
+	btn.Reply.ID = strings.Repeat("A", 256)
+    msg := NewInteractive(NewButtons(btn)).SetBody("body")
 
-	id = strings.Repeat("A", 257)
-	btn = NewButton("12345678901234567890", id)
-	if err := btn.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Error("button id cannot have more than 256 characters")
-		}
-	}
+    expectNoValidationErr(t, msg)
 
-	id = " 1234 "
-	btn = NewButton("12345678901234567890", id)
-	if err := btn.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Error("button id cannot start or end with a space")
-		}
-	}
+	btn.Reply.ID += "A"
+    msg = NewInteractive(NewButtons(btn)).SetBody("body")
+    expectValidationErr(t, msg, "button id cannot have more than 256 characters")
+
+	btn.Reply.ID = " 1234 "
+    msg = NewInteractive(NewButtons(btn)).SetBody("body")
+    expectValidationErr(t, msg, "button id cannot start or end with a space")
 }
 
 func TestButtonTitle(t *testing.T) {
 	btn := NewButton("", "114")
+    msg := NewInteractive(NewButtons(btn)).SetBody("body")
+    expectValidationErr(t, msg, "button title cannot be empty")
 
-	if err := btn.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Error("button title cannot be empty")
-		}
-	}
+	btn.Reply.Title = strings.Repeat("1", 20)
+    msg = NewInteractive(NewButtons(btn)).SetBody("body")
+    expectNoValidationErr(t, msg)
 
-	btn = NewButton("12345678901234567890", "114")
-	if err := btn.Validate(); err != nil {
-		t.Error("button title can have exactly 20 characters")
-	}
-
-	btn = NewButton("123456789012345678901", "114")
-	if err := btn.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Error("button title cannot have more than 20 characters")
-		}
-	}
+    btn.Reply.Title += "1"
+    msg = NewInteractive(NewButtons(btn)).SetBody("body")
+    expectValidationErr(t, msg, "button title cannot have more than 20 characters")
 }
 
 func TestButtonMessageMustHaveBody(t *testing.T) {
     btn := NewInteractive(NewButtons(NewButton("Click me!", "1")))
-
-    payload := NewPayload(to, btn)
-
-    if err := payload.Validate(); err == nil {
-		if _, ok := err.(ValidationError); !ok {
-			t.Error("Interactive button with no body must be an error")
-		}
-	}
-}
-
-func expectValidationErr(t *testing.T, msg Message, errStr string) {
-    payload := NewPayload(to, msg)
-
-    if err := payload.Validate(); err == nil { // no error
-        t.Errorf("expected error: %s. received no error", errStr)
-	}else{
-        if e, ok := err.(*ValidationError); ok {
-            if e.err.Error() != errStr {
-                t.Errorf("expected: %s. received: %s", errStr, e.err.Error())
-            }
-        }else{
-            t.Error("expect ValidationError but found other error", err)
-        }
-    }
-}
-
-func expectNoValidationErr(t *testing.T, msg Message) {
-    payload := NewPayload(to, msg)
-
-    if err := payload.Validate(); err != nil { // error
-        t.Errorf("expected no error, received: %s", err.Error())
-	}
+    expectValidationErr(t, btn, "body its required")
 }
 
 func TestListMessage(t *testing.T) {
@@ -237,15 +155,6 @@ func TestListMessage(t *testing.T) {
     expectValidationErr(t, msg, "list section cannot have more than 10 rows")
 }
 
-func buildListFromRow(row Row) *Interactive {
-    return NewInteractive(
-        NewList("button", 
-            NewListSection("Section 1", row),
-        ),
-    ).
-    SetBody("body")
-}
-
 func TestListMessageRows(t *testing.T) {
     // ID
     row := NewRow(strings.Repeat("1", 200), "title", "desc")
@@ -270,4 +179,38 @@ func TestListMessageRows(t *testing.T) {
 
     row.Description = ""
     expectNoValidationErr(t, buildListFromRow(row))
+}
+
+func expectValidationErr(t *testing.T, msg Message, errStr string) {
+    payload := NewPayload(to, msg)
+
+    if err := payload.Validate(); err == nil { // no error
+        t.Errorf("expected error: %s. received no error", errStr)
+	}else{
+        if e, ok := err.(*ValidationError); ok {
+            if e.err.Error() != errStr {
+                t.Errorf("expected: %s. received: %s", errStr, e.err.Error())
+            }
+        }else{
+            t.Error("expect ValidationError but found other error", err)
+        }
+    }
+}
+
+func buildListFromRow(row Row) *Interactive {
+    return NewInteractive(
+        NewList("button", 
+            NewListSection("Section 1", row),
+        ),
+    ).
+    SetBody("body")
+}
+
+
+func expectNoValidationErr(t *testing.T, msg Message) {
+    payload := NewPayload(to, msg)
+
+    if err := payload.Validate(); err != nil { // error
+        t.Errorf("expected no error, received: %s", err.Error())
+	}
 }

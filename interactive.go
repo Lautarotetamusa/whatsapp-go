@@ -9,9 +9,8 @@ import (
 // Any type of action of an Interactive message 
 // Each action have a specific required field
 type Action interface {
+    Validable
 	GetInteractionType() InteractionType
-
-	Validate() error
 }
 
 type Interactive struct {
@@ -109,7 +108,13 @@ type List struct {
     Sections    []ListSection `json:"sections"`
 }
 
-func (r *Row) Validate() error {
+func NewInteractive(action Action) *Interactive {
+	return &Interactive{
+        action: action,
+    }
+}
+
+func (r Row) Validate() error {
     if len(r.Title) > 24 {
         return NewErr(r, errors.New("row title cannot have more than 24 characters"))
     }
@@ -129,8 +134,12 @@ func (s ListSection) Validate() error {
     if len(s.Rows) > 10 {
         return NewErr(s, errors.New("list section cannot have more than 10 rows"))
     }
-    for _, row := range s.Rows {
-        if err := row.Validate(); err != nil {
+    return validateAll(s.Rows)
+}
+
+func validateAll[T Validable](items []T) error {
+    for _, i := range items {
+        if err := i.Validate(); err != nil {
             return err
         }
     }
@@ -141,22 +150,15 @@ func (l List) Validate() error {
     if len(l.Button) > 20 {
         return NewErr(l, errors.New("list button cannot have more than 20 chars"))
     }
+
     if len(l.Sections) == 0 {
         return NewErr(l, errors.New("list must have at least 1 section"))
     }
     if len(l.Sections) > 10 {
         return NewErr(l, errors.New("list cannot have more than 10 sections"))
     }
-    for _, section := range l.Sections {
-        if err := section.Validate(); err != nil {
-            return err
-        }
-    }
-    return nil
-}
 
-func (l List) GetInteractionType() InteractionType {
-    return ListType
+    return validateAll(l.Sections)
 }
 
 func NewList(button string, listSections ...ListSection) List {
@@ -191,11 +193,11 @@ func (btn *Button) Validate() error {
 	}
 
 	if len(btn.Reply.ID) > 256 {
-		return NewErr(btn, errors.New("button ID cannot have more than 256 characters"))
+		return NewErr(btn, errors.New("button id cannot have more than 256 characters"))
 	}
 
 	if btn.Reply.ID[0] == ' ' || btn.Reply.ID[len(btn.Reply.ID)-1] == ' ' {
-		return NewErr(btn, errors.New("button ID cannot start or end with a space"))
+		return NewErr(btn, errors.New("button id cannot start or end with a space"))
 	}
 
 	return nil
@@ -213,15 +215,11 @@ func (buttons Buttons) Validate() error {
 		}
 
 		if idMap[btn.Reply.ID] {
-			return NewErr(buttons, errors.New("two buttons cannot have the same ID in one message"))
+			return NewErr(buttons, errors.New("two buttons cannot have the same id in one message"))
 		}
 		idMap[btn.Reply.ID] = true
 	}
 	return nil
-}
-
-func (buttons Buttons) GetInteractionType() InteractionType {
-	return ButtonType
 }
 
 func NewButton(title, id string) Button {
@@ -235,13 +233,9 @@ func NewButton(title, id string) Button {
 }
 
 func NewButtons(buttons ...Button) Buttons {
-	return Buttons{
+    return Buttons{
         Buttons: buttons,
     }
-}
-
-func (cta CallToAction) GetInteractionType() InteractionType {
-	return CallToActionType
 }
 
 func (cta CallToAction) Validate() error {
@@ -296,16 +290,6 @@ func (i *Interactive) Validate() error {
 	return i.action.Validate()
 }
 
-func (i *Interactive) GetType() MessageType {
-	return InteractiveType
-}
-
-func NewInteractive(action Action) *Interactive {
-	return &Interactive{
-        action: action,
-    }
-}
-
 func NewCallToAction(body, displayText, url string) *Interactive {
 	return &Interactive{
 		action: CallToAction{
@@ -353,3 +337,20 @@ func NewFooter(text string) *Footer {
 		Text: text,
 	}
 }
+
+func (i *Interactive) GetType() MessageType {
+	return InteractiveType
+}
+
+func (l List) GetInteractionType() InteractionType {
+    return ListType
+}
+
+func (buttons Buttons) GetInteractionType() InteractionType {
+	return ButtonType
+}
+
+func (cta CallToAction) GetInteractionType() InteractionType {
+	return CallToActionType
+}
+

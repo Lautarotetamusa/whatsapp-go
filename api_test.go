@@ -1,7 +1,6 @@
 package whatsapp
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -160,7 +159,6 @@ func TestSendInteractiveCTA(t *testing.T) {
 
 	_, err := w.Send(to, msg)
 	if err != nil {
-        fmt.Println(NewPayload(to, msg))
 		t.Fatal(err)
 	}
 }
@@ -174,11 +172,8 @@ func TestSendButtons(t *testing.T) {
 	)).
 		SetBody("hola!").
 		SetHeader(&Image{
-			Media: FromID("875620687804085"),
+			Media: FromID("903533311949481"),
 		})
-
-    payload := NewPayload(to, msg)
-    fmt.Println(payload)
 
 	_, err := w.Send(to, msg)
 	if err != nil {
@@ -198,9 +193,6 @@ func TestSendListMessage(t *testing.T) {
         ),
     ).SetBody("hello!").
     SetFooter("choose 1 option")
-
-    payload := NewPayload(to, msg)
-    fmt.Println(payload)
 
 	_, err := w.Send(to, msg)
 	if err != nil {
