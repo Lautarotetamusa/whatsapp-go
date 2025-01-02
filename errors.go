@@ -3,6 +3,7 @@ package whatsapp
 import (
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 type ResponseError struct {
@@ -13,23 +14,25 @@ type ResponseError struct {
 }
 
 type ValidationError struct {
-	msg Message
+	obj any
 	err error
+    typ reflect.Type
 }
 
 func (e *ResponseError) Error() string {
 	return fmt.Sprintf("(%d) %s - %s\nfbtrace_id: %s", e.Code, e.Type, e.Message, e.FbtraceId)
 }
 
-func NewErr(m Message, e error) *ValidationError {
+func NewErr(m any, e error) *ValidationError {
 	return &ValidationError{
-		msg: m,
+		obj: m,
 		err: e,
+        typ: reflect.TypeOf(m),
 	}
 }
 
 func (e ValidationError) Error() string {
-	return fmt.Sprintf("type: %s err: %s", e.msg.GetType(), e.err.Error())
+	return fmt.Sprintf("type: %s err: %s", e.typ, e.err.Error())
 }
 
 var (

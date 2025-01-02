@@ -15,9 +15,9 @@ Easy way for creating bots and sending and reciving messages using the *Whatsapp
         - [x] Document
     - [ ] Interactive
         - [x] Buttons
-        - [ ] Call To Action
+        - [-] Call To Action
         - [ ] Catalog
-        - [ ] List
+        - [X] List
         - [ ] Product
         - [ ] Product List
         - [ ] Flow

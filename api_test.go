@@ -1,6 +1,7 @@
 package whatsapp
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -147,20 +148,22 @@ func TestSendContacts(t *testing.T) {
 	}
 }
 
-// func TestSendInteractiveCTA(t *testing.T) {
-//     w := getWhatsapp()
-//
-//     msg := NewCallToAction("hola!", "See Dates", "https://www.luckyshrub.com").
-//         SetHeader(&Image{
-//             Media: NewMedia("903533311949481"),
-//         }).
-//         SetFooter("lautarotetamusa")
-//
-// 	_, err := w.Send(to, msg)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// }
+func TestSendInteractiveCTA(t *testing.T) {
+    w := getWhatsapp()
+
+    msg := NewCallToAction("hola!", "See Dates", "https://www.luckyshrub.com").
+        SetFooter("lautarotetamusa")
+        // Dont work when i add a header. WHY??
+        // SetHeader(&Image{
+        //     Media: NewMedia("903533311949481"),
+        // }).
+
+	_, err := w.Send(to, msg)
+	if err != nil {
+        fmt.Println(NewPayload(to, msg))
+		t.Fatal(err)
+	}
+}
 
 func TestSendButtons(t *testing.T) {
 	w := getWhatsapp()
@@ -171,8 +174,33 @@ func TestSendButtons(t *testing.T) {
 	)).
 		SetBody("hola!").
 		SetHeader(&Image{
-			Media: FromID("903533311949481"),
+			Media: FromID("875620687804085"),
 		})
+
+    payload := NewPayload(to, msg)
+    fmt.Println(payload)
+
+	_, err := w.Send(to, msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSendListMessage(t *testing.T) {
+    w := getWhatsapp()
+
+    msg := NewInteractive(
+        NewList("Button",
+            NewListSection("Section 1 - Fruit",
+                NewRow("1", "Apple", "Dozen"),
+                NewRow("2", "Orange", "Dozen"),
+            ),
+        ),
+    ).SetBody("hello!").
+    SetFooter("choose 1 option")
+
+    payload := NewPayload(to, msg)
+    fmt.Println(payload)
 
 	_, err := w.Send(to, msg)
 	if err != nil {

@@ -3,18 +3,19 @@ package whatsapp
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 )
 
-type InteractiveAction interface {
+// Holds the data of any type of interaction action
+// Any type of action of an Interactive message 
+// Each action have a specific required field
+type Action interface {
 	GetInteractionType() InteractionType
+
 	Validate() error
 }
 
 type Interactive struct {
-	Type InteractionType `json:"type"`
-
-	Action Action `json:"action"`
+	action Action
 
 	// Optional for ProductType, required for the other types
 	Body *Body `json:"body,omitempty"`
@@ -24,11 +25,6 @@ type Interactive struct {
 
 	// Optional
 	Footer *Footer `json:"footer,omitempty"`
-}
-
-// Holds the data of any type of interaction action
-type Action struct {
-	msg InteractiveAction
 }
 
 // https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages/#header-object
@@ -49,9 +45,36 @@ type Footer struct {
 	Text string `json:"text"`
 }
 
+type ListSection struct {
+    // Required if the message have more than one section
+    Title   string  `json:"title"`
+    // Max len: 10
+    Rows []Row `json:"rows"`
+}
+
+type ProductSection struct {
+    // Required if the message have more than one section
+    Title   string  `json:"title"`
+    // Max len: 30
+    ProductItems []Product `json:"product_items"`
+}
+
+type Product struct {
+    ProductRetailerID string `json:"product_retailer_id"`
+}
+
+type Row struct {
+    // Max length: 200 chars
+    ID          string  `json:"id"`
+    // Max length: 24 chars
+    Title       string  `json:"title"`
+    // Optional. Max length: 72 chars
+    Description string  `json:"description,omitempty"`
+}
+
 type CallToAction struct {
-	Name       string     `json:"name"`
-	Parameters Parameters `json:"parameters"`
+    Name        string      `json:"name"`
+    Parameters  Parameters  `json:"parameters"`
 }
 
 type Parameters struct {
@@ -61,7 +84,9 @@ type Parameters struct {
 }
 
 // Max 3 buttons per message
-type Buttons []Button
+type Buttons struct {
+    Buttons []Button `json:"buttons"`
+}
 type Button struct {
 	// "reply"
 	Type string `json:"type"`
@@ -78,39 +103,117 @@ type Reply struct {
 	ID string `json:"id"`
 }
 
+type List struct {
+    // Max length: 20 chars
+    Button      string        `json:"button"`
+    Sections    []ListSection `json:"sections"`
+}
+
+func (r *Row) Validate() error {
+    if len(r.Title) > 24 {
+        return NewErr(r, errors.New("row title cannot have more than 24 characters"))
+    }
+
+    if len(r.ID) > 200 {
+        return NewErr(r, errors.New("row id cannot have more than 200 characters"))
+    }
+
+    if r.Description != "" && len(r.Description) > 72 {
+        return NewErr(r, errors.New("row description cannot have more than 72 characters"))
+    }
+
+    return nil
+}
+
+func (s ListSection) Validate() error {
+    if len(s.Rows) > 10 {
+        return NewErr(s, errors.New("list section cannot have more than 10 rows"))
+    }
+    for _, row := range s.Rows {
+        if err := row.Validate(); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (l List) Validate() error {
+    if len(l.Button) > 20 {
+        return NewErr(l, errors.New("list button cannot have more than 20 chars"))
+    }
+    if len(l.Sections) == 0 {
+        return NewErr(l, errors.New("list must have at least 1 section"))
+    }
+    if len(l.Sections) > 10 {
+        return NewErr(l, errors.New("list cannot have more than 10 sections"))
+    }
+    for _, section := range l.Sections {
+        if err := section.Validate(); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (l List) GetInteractionType() InteractionType {
+    return ListType
+}
+
+func NewList(button string, listSections ...ListSection) List {
+    return List{
+        Button: button,
+        Sections: listSections,
+    }
+}
+
+func NewListSection(title string, rows ...Row) ListSection {
+    return ListSection{
+        Title: title,
+        Rows: rows,
+    }
+}
+
+func NewRow(id, title, desc string) Row {
+    return Row{
+        ID: id,
+        Title: title,
+        Description: desc,
+    }
+}
+
 func (btn *Button) Validate() error {
 	if btn.Reply.Title == "" {
-		return NewErr(&Interactive{}, errors.New("button title cannot be empty"))
+		return NewErr(btn, errors.New("button title cannot be empty"))
 	}
 
 	if len(btn.Reply.Title) > 20 {
-		return NewErr(&Interactive{}, errors.New("button title cannot have more than 20 characters"))
+		return NewErr(btn, errors.New("button title cannot have more than 20 characters"))
 	}
 
 	if len(btn.Reply.ID) > 256 {
-		return NewErr(&Interactive{}, errors.New("button ID cannot have more than 256 characters"))
+		return NewErr(btn, errors.New("button ID cannot have more than 256 characters"))
 	}
 
 	if btn.Reply.ID[0] == ' ' || btn.Reply.ID[len(btn.Reply.ID)-1] == ' ' {
-		return NewErr(&Interactive{}, errors.New("button ID cannot start or end with a space"))
+		return NewErr(btn, errors.New("button ID cannot start or end with a space"))
 	}
 
 	return nil
 }
 
 func (buttons Buttons) Validate() error {
-	if len(buttons) > 3 {
-		return NewErr(&Interactive{}, errors.New("interaction cannot have more than 3 buttons"))
+	if len(buttons.Buttons) > 3 {
+		return NewErr(buttons, errors.New("interaction cannot have more than 3 buttons"))
 	}
 
 	idMap := make(map[string]bool, 3)
-	for _, btn := range buttons {
+	for _, btn := range buttons.Buttons {
 		if err := btn.Validate(); err != nil {
 			return err
 		}
 
 		if idMap[btn.Reply.ID] {
-			return NewErr(&Interactive{}, errors.New("two buttons cannot have the same ID in one message"))
+			return NewErr(buttons, errors.New("two buttons cannot have the same ID in one message"))
 		}
 		idMap[btn.Reply.ID] = true
 	}
@@ -118,7 +221,7 @@ func (buttons Buttons) Validate() error {
 }
 
 func (buttons Buttons) GetInteractionType() InteractionType {
-	return ButtonsType
+	return ButtonType
 }
 
 func NewButton(title, id string) Button {
@@ -132,7 +235,9 @@ func NewButton(title, id string) Button {
 }
 
 func NewButtons(buttons ...Button) Buttons {
-	return Buttons(buttons)
+	return Buttons{
+        Buttons: buttons,
+    }
 }
 
 func (cta CallToAction) GetInteractionType() InteractionType {
@@ -151,12 +256,22 @@ func (h *Header) Validate() error {
 	return nil
 }
 
-func (a *Action) MarshalJSON() ([]byte, error) {
-	typ := a.msg.GetInteractionType()
+// TODO: Maybe can do this better??
+func (i *Interactive) MarshalJSON() ([]byte, error) {
+	typ := i.action.GetInteractionType()
 	dataMap := map[string]any{
-		"name":      typ,
-		string(typ): a.msg,
+        "type": typ,
+        "action": i.action,
 	}
+    if i.Body != nil {
+        dataMap["body"] = i.Body
+    }
+    if i.Header != nil {
+        dataMap["header"] = i.Header
+    }
+    if i.Footer != nil {
+        dataMap["footer"] = i.Footer
+    }
 
 	return json.Marshal(dataMap)
 }
@@ -172,40 +287,34 @@ func (h *Header) MarshalJSON() ([]byte, error) {
 }
 
 func (i *Interactive) Validate() error {
-	typ := i.Action.msg.GetInteractionType()
-	if typ != Product {
+	typ := i.action.GetInteractionType()
+	if typ != ProductType {
 		if i.Body == nil {
-			return NewErr(i, fmt.Errorf("body its required in '%s' type", typ))
+			return NewErr(i.action, errors.New("body its required"))
 		}
 	}
-	return i.Action.msg.Validate()
+	return i.action.Validate()
 }
 
 func (i *Interactive) GetType() MessageType {
 	return InteractiveType
 }
 
-func NewInteractive(action InteractiveAction) *Interactive {
+func NewInteractive(action Action) *Interactive {
 	return &Interactive{
-		Type: ButtonType,
-		Action: Action{
-			msg: action,
-		},
-	}
+        action: action,
+    }
 }
 
 func NewCallToAction(body, displayText, url string) *Interactive {
 	return &Interactive{
-		Action: Action{
-			msg: CallToAction{
-				Name: string(CallToActionType),
-				Parameters: Parameters{
-					DisplayText: displayText,
-					URL:         url,
-				},
-			},
+		action: CallToAction{
+            Name: "cta_url",
+            Parameters: Parameters{
+                DisplayText: displayText,
+                URL:         url,
+            },
 		},
-		// This its not required in all types
 		Body: &Body{
 			Text: body,
 		},

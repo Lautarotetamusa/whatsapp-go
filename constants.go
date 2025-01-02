@@ -15,17 +15,27 @@ const (
 )
 
 type InteractionType string
-
 const (
 	//TODO: cta_url its not present in the references but in the Examples
 	CallToActionType InteractionType = "cta_url"
 	ButtonType       InteractionType = "button"
-	ButtonsType      InteractionType = "buttons"
 	CatalogType      InteractionType = "catalog_message"
-	List             InteractionType = "list"
-	Product          InteractionType = "product"
-	Product_list     InteractionType = "product_list"
-	Flow             InteractionType = "flow"
+	ListType         InteractionType = "list"
+	ProductType      InteractionType = "product"
+    ProductList      InteractionType = "product_list"
+	FlowType         InteractionType = "flow"
+)
+
+// https://developers.facebook.com/docs/whatsapp/cloud-api/reference/messages#interactive-obj
+// Action object requires specefic fields.
+// requiredFields gives the name of the field required by an
+// Specific InteractionType
+type ActionRequiredField string
+const (
+    ButtonsField    ActionRequiredField = "buttons"
+    SectionsField   ActionRequiredField = "sections"
+    CTAField        ActionRequiredField = "cta_url"
+    ParametersField ActionRequiredField = "parameters"
 )
 
 // "header" or "body"
